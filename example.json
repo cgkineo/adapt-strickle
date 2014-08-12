@@ -1,7 +1,9 @@
 // To go in the contentObject.json file
 //enables trickle on the page
 "_strickle": {
-    "_isEnabled": true
+    "_isEnabled": true,
+    "_autoScroll": true,
+    "_bottomPadding": 80
 },
 
 

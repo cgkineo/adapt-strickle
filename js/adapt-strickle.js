@@ -9,12 +9,15 @@ define(function(require) {
 	var Adapt = require('coreJS/adapt');
 	var Backbone = require('backbone');
 
+	require('extensions/adapt-strickle/js/_hacks');
+
 	var strickle = Backbone.View.extend({
 		children: undefined,
 		pageView: undefined,
 		currentModel: undefined,
 		currentIndex: 0,
 		autoScroll: false,
+		bottomPadding: 20,
 		attach: function(children) {
 			this.detach();
 			$("html").addClass("strickle");
@@ -54,16 +57,15 @@ define(function(require) {
 			if (this.currentModel === undefined) return;
 			var element = $("." + this.currentModel.get("_id"));
 			if (element.length === 0) return;
-			var parent = element.parent();
-			var offset = parent.offset();
+			var offset = element.offset();
 			var id = strickle.currentModel.get("_id");
 			id = STRIfIdOffsetHiddenReturnParentId(id);
 			if (animate === false ) {
-				$("body").css({"height":(offset.top + parent.height()) + "px"});
-				if (strickle.autoScroll) $.scrollTo("."+id);
+				$("body").css({"height":(offset.top + element.height() + this.bottomPadding) + "px"});
+				//if (strickle.autoScroll) $.scrollTo("."+id);
 				return;
 			}
-			$("body").animate({"height":(offset.top + parent.height()) + "px"}, 100, function() {
+			$("body").animate({"height":(offset.top + element.height() + this.bottomPadding) + "px"}, 100, function() {
 				if (strickle.autoScroll) $.scrollTo("."+id, {duration:300});
 			});
 		},
@@ -95,6 +97,7 @@ define(function(require) {
 	});
 	strickle = new strickle();
 
+
 	Adapt.on('pageView:postRender', function(pageView) {
 
 		strickle.detach();
@@ -103,6 +106,14 @@ define(function(require) {
 		if (pageModel.get("_strickle") === undefined) return;
 		var config = pageModel.get("_strickle");
 		if (config._isEnabled !== true && config._isEnabled !== undefined ) return;
+
+		strickle.autoScroll = config._autoScroll !== undefined 
+									? config._autoScroll
+									: true;
+		strickle.bottomPadding = config._bottomPadding !== undefined 
+									? config._bottomPadding
+									: true;
+
 
 		var children = pageModel.findDescendants("components").filter(function(child) {
 			if (child.get("_strickle") === undefined) return true;
@@ -114,7 +125,7 @@ define(function(require) {
 		strickle.pageView = pageView;
 		strickle.attach(children);
 		strickle.currentModel = children[0];
-		strickle.resize(false);
+		_.delay(function() { strickle.resize(false); } , 500)
 		
 	});
 

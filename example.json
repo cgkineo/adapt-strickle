@@ -3,7 +3,11 @@
 "_strickle": {
     "_isEnabled": true,
     "_autoScroll": true,
-    "_bottomPadding": 80
+    "_bottomPadding": 80,
+    "_ignoreComponents": [
+    	"blank",
+    	"text"
+    ]
 },
 
 

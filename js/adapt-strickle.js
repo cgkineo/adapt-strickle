@@ -116,7 +116,10 @@ define(function(require) {
 
 
 		var children = pageModel.findDescendants("components").filter(function(child) {
-			if (child.get("_strickle") === undefined) return true;
+			if (pageModel.get("_strickle")._ignoreComponents) {
+				if (pageModel.get("_strickle")._ignoreComponents.indexOf(child.get("_component")) > -1 ) return false;
+			}
+			if (child.get("_strickle") === undefined ) return true;
 			var config = child.get("_strickle");
 			if (config._isEnabled !== true && config._isEnabled !== undefined ) return false;
 			return true;

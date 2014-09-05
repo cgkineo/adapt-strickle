@@ -49,6 +49,7 @@ define(function(require) {
 				return;
 			}
 			strickle.currentModel = strickle.children[strickle.currentIndex];
+			this.visibility();
 			this.tabIndex();
 			console.log("interaction complete" + child.get("_id"));
 			strickle.resize();
@@ -60,14 +61,26 @@ define(function(require) {
 			var offset = element.offset();
 			var id = strickle.currentModel.get("_id");
 			id = STRIfIdOffsetHiddenReturnParentId(id);
+			var padding = this.bottomPadding + parseInt($("#wrapper").css("margin-bottom"));
 			if (animate === false ) {
-				$("body").css({"height":(offset.top + element.height() + this.bottomPadding) + "px"});
+				$("body").css({"height":(offset.top + element.height() + padding) + "px"});
 				//if (strickle.autoScroll) $.scrollTo("."+id);
 				return;
 			}
-			$("body").animate({"height":(offset.top + element.height() + this.bottomPadding) + "px"}, 100, function() {
-				if (strickle.autoScroll) $.scrollTo("."+id, {duration:300});
+			$("body").animate({"height":(offset.top + element.height() + padding) + "px"}, 100, function() {
+				if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration:300});
 			});
+		},
+		visibility: function() {
+			if (strickle.pageView === undefined) return;
+			for(var i = 0; i < this.currentIndex + 1; i++) {
+				var child = this.children[i];
+				child.set("_isVisible", true, { pluginName: "strickle" });
+			}
+			for(var i = this.currentIndex + 1; i < this.children.length; i++) {
+				var child = this.children[i];
+				child.set("_isVisible", false, { pluginName: "strickle" });
+			}
 		},
 		tabIndex: function() {
 			if (strickle.pageView === undefined) return;
@@ -99,7 +112,6 @@ define(function(require) {
 
 
 	Adapt.on('pageView:postRender', function(pageView) {
-
 		strickle.detach();
 		
 		var pageModel = pageView.model;
@@ -112,7 +124,7 @@ define(function(require) {
 									: true;
 		strickle.bottomPadding = config._bottomPadding !== undefined 
 									? config._bottomPadding
-									: true;
+									: 20;
 
 
 		var children = pageModel.findDescendants("components").filter(function(child) {
@@ -130,6 +142,12 @@ define(function(require) {
 		strickle.currentModel = children[0];
 		_.delay(function() { strickle.resize(false); } , 500)
 		
+	});
+
+	Adapt.on('componentView:preRender', function(componentView) {
+		if (strickle.currentModel === undefined) return;
+		var componentModel = componentView.model;
+		strickle.visibility();
 	});
 
 	Adapt.on('componentView:postRender', function(componentView) {

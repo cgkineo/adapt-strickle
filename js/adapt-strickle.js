@@ -112,35 +112,40 @@ define(function(require) {
 
 
 	Adapt.on('pageView:postRender', function(pageView) {
-		strickle.detach();
-		
+
 		var pageModel = pageView.model;
 		if (pageModel.get("_strickle") === undefined) return;
 		var config = pageModel.get("_strickle");
 		if (config._isEnabled !== true && config._isEnabled !== undefined ) return;
 
-		strickle.autoScroll = config._autoScroll !== undefined 
-									? config._autoScroll
-									: true;
-		strickle.bottomPadding = config._bottomPadding !== undefined 
-									? config._bottomPadding
-									: 20;
+		_.defer( _.bind(function () {
+
+			strickle.detach();
+
+			strickle.autoScroll = config._autoScroll !== undefined 
+										? config._autoScroll
+										: true;
+			strickle.bottomPadding = config._bottomPadding !== undefined 
+										? config._bottomPadding
+										: 20;
 
 
-		var children = pageModel.findDescendants("components").filter(function(child) {
-			if (pageModel.get("_strickle")._ignoreComponents) {
-				if (pageModel.get("_strickle")._ignoreComponents.indexOf(child.get("_component")) > -1 ) return false;
-			}
-			if (child.get("_strickle") === undefined ) return true;
-			var config = child.get("_strickle");
-			if (config._isEnabled !== true && config._isEnabled !== undefined ) return false;
-			return true;
-		});
+			var children = pageModel.findDescendants("components").filter(function(child) {
+				if (pageModel.get("_strickle")._ignoreComponents) {
+					if (pageModel.get("_strickle")._ignoreComponents.indexOf(child.get("_component")) > -1 ) return false;
+				}
+				if (child.get("_strickle") === undefined ) return true;
+				var config = child.get("_strickle");
+				if (config._isEnabled !== true && config._isEnabled !== undefined ) return false;
+				return true;
+			});
 
-		strickle.pageView = pageView;
-		strickle.attach(children);
-		strickle.currentModel = children[0];
-		_.delay(function() { strickle.resize(false); } , 500)
+			strickle.pageView = pageView;
+			strickle.attach(children);
+			strickle.currentModel = children[0];
+			_.delay(function() { strickle.resize(false); } , 500)
+
+		}, window, pageView));
 		
 	});
 

@@ -1,3 +1,9 @@
+/*
+* adapt-strickle
+* License - http://github.com/adaptlearning/adapt_framework/LICENSE
+* Maintainers - Oliver Foster <oliver.foster@kineo.com>
+*/
+
 // To go in the contentObject.json file
 //enables trickle on the page
 "_strickle": {

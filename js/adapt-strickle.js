@@ -12,6 +12,7 @@ define(function(require) {
 	require('extensions/adapt-strickle/js/_hacks');
 
 	var strickle = Backbone.View.extend({
+		isOn: false,
 		children: undefined,
 		pageView: undefined,
 		currentModel: undefined,
@@ -110,13 +111,27 @@ define(function(require) {
 	});
 	strickle = new strickle();
 
+	Adapt.on('menuView:postRender', function(menuView) {
+		if (strickle.isOn) {
+			strickle.isOn = false;
+			$("body").css({"height": "auto"});
+		}
+	});
+
 
 	Adapt.on('pageView:postRender', function(pageView) {
 
 		var pageModel = pageView.model;
-		if (pageModel.get("_strickle") === undefined) return;
+		if (pageModel.get("_strickle") === undefined) {
+			if (strickle.isOn) {
+				strickle.isOn = false;
+				$("body").css({"height": "auto"});
+			}
+			return;
+		}
 		var config = pageModel.get("_strickle");
 		if (config._isEnabled !== true && config._isEnabled !== undefined ) return;
+		strickle.isOn = true;
 
 		_.defer( _.bind(function () {
 

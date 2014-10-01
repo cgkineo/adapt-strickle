@@ -115,6 +115,7 @@ define(function(require) {
 		if (strickle.isOn) {
 			strickle.isOn = false;
 			$("body").css({"height": "auto"});
+			$("html").removeClass("strickle");
 		}
 	});
 
@@ -126,6 +127,7 @@ define(function(require) {
 			if (strickle.isOn) {
 				strickle.isOn = false;
 				$("body").css({"height": "auto"});
+				$("html").removeClass("strickle");
 			}
 			return;
 		}

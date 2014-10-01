@@ -27,8 +27,8 @@ define(function(require) {
 			if (this.children === undefined) return;
 			if (this.children.length === 0) return;
 			_.each(children, function(child) {
-				strickle.listenTo(child, 'change:_isInteractionsComplete', strickle.onInteractionComplete);
-			});
+					strickle.listenTo(child, 'change:_isInteractionsComplete', strickle.onInteractionComplete);
+						});
 		},
 		detach: function() {
 			$("html").removeClass("strickle");
@@ -49,7 +49,7 @@ define(function(require) {
 				strickle.detach();
 				return;
 			}
-			strickle.currentModel = strickle.children[strickle.currentIndex];
+				strickle.currentModel = strickle.children[strickle.currentIndex];
 			this.visibility();
 			this.tabIndex();
 			console.log("interaction complete" + child.get("_id"));
@@ -76,11 +76,11 @@ define(function(require) {
 			if (strickle.pageView === undefined) return;
 			for(var i = 0; i < this.currentIndex + 1; i++) {
 				var child = this.children[i];
-				child.set("_isVisible", true, { pluginName: "strickle" });
-			}
+					child.set("_isVisible", true, { pluginName: "strickle" });
+				}
 			for(var i = this.currentIndex + 1; i < this.children.length; i++) {
 				var child = this.children[i];
-				child.set("_isVisible", false, { pluginName: "strickle" });
+						child.set("_isVisible", false, { pluginName: "strickle" });
 			}
 		},
 		tabIndex: function() {

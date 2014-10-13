@@ -9,12 +9,10 @@
 "_strickle": {
     "_isEnabled": true,
     "_autoScroll": true,
-    "_bottomPadding": 20,
-    "_animateSpeed": 1000,
-    "_waitForEvent": "tutor:closed",
+    "_bottomPadding": 80,
     "_ignoreComponents": [
-        "blank",
-        "text"
+    	"blank",
+    	"text"
     ]
 },
 

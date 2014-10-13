@@ -14,21 +14,48 @@ define(function(require) {
 	var strickle = Backbone.View.extend({
 		isOn: false,
 		children: undefined,
+		allchildren: undefined,
 		pageView: undefined,
 		currentModel: undefined,
-		currentIndex: 0,
+		currentIndex: -1,
 		autoScroll: false,
 		bottomPadding: 20,
-		attach: function(children) {
+		config: undefined,
+		attach: function(children, allchildren) {
 			this.detach();
 			$("html").addClass("strickle");
 			strickle.autoScroll = false;
 			this.children = children;
+			this.allchildren = allchildren;
 			if (this.children === undefined) return;
 			if (this.children.length === 0) return;
-			_.each(children, function(child) {
+			var initial;
+			_.each(children, function(child, index) {
+				if (!child.get("_isSubmitted")) {
 					strickle.listenTo(child, 'change:_isInteractionsComplete', strickle.onInteractionComplete);
+					strickle.listenTo(child, 'change:_attemptsLeft', function(model) {
+						_.defer(function() {
+							if (model.get("_id") != strickle.currentModel.get("_id")) return;
+							var element = $("." + strickle.currentModel.get("_id"));
+							if (element.length === 0) return;
+							strickle.resize(false);
+							if (strickle.config._waitForEvent) {
+								Adapt.once(strickle.config._waitForEvent, function() {
+									Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+								});
+							} else {
+								Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+							}
 						});
+					})
+					if (initial === undefined) {
+						initial = child;
+						strickle.currentIndex = index;
+					}
+				}
+			});
+			strickle.currentModel = initial;
+			this.visibility();
 		},
 		detach: function() {
 			$("html").removeClass("strickle");
@@ -38,49 +65,99 @@ define(function(require) {
 				strickle.stopListening(child, 'change:_isInteractionsComplete');
 			});
 			strickle.children = undefined;
+			//strickle.allchildren = undefined;
 			strickle.currentModel = undefined;
 			strickle.pageView = undefined;
-			strickle.currentIndex = 0;
+			strickle.currentIndex = -1;
 		},
 		onInteractionComplete: function(child) {
 			strickle.autoScroll = true;
+			var currentStrickleId = strickle.children[strickle.currentIndex].get("_id");
+			var nextScrollTo = undefined;
+			for (var i = 0; i < strickle.allchildren.models.length; i++) {
+				if (strickle.allchildren.models[i].get("_id") == currentStrickleId) {
+					nextScrollTo = strickle.allchildren.models[i+1];
+					break;
+				}
+			}
 			strickle.currentIndex++;
-			if (strickle.currentIndex == strickle.children.length) {
+			if (nextScrollTo === undefined) {
 				strickle.detach();
+				strickle.resize();
+				//strickle.visibility();
 				return;
 			}
+			if (strickle.currentIndex == strickle.children.length) {
+				strickle.detach();
+				strickle.currentModel = nextScrollTo;
+			} else {
 				strickle.currentModel = strickle.children[strickle.currentIndex];
-			this.visibility();
-			this.tabIndex();
-			console.log("interaction complete" + child.get("_id"));
+			}
+			strickle.nextScrollTo = nextScrollTo;
+			//console.log("interaction complete" + child.get("_id"));
 			strickle.resize();
+			//strickle.visibility();
 		},
 		resize: function(animate) {
 			if (this.currentModel === undefined) return;
 			var element = $("." + this.currentModel.get("_id"));
 			if (element.length === 0) return;
 			var offset = element.offset();
-			var id = strickle.currentModel.get("_id");
+			var id;
+			if (strickle.nextScrollTo !== undefined) id = strickle.nextScrollTo.get("_id");
+			else id = strickle.currentModel.get("_id");
 			id = STRIfIdOffsetHiddenReturnParentId(id);
 			var padding = this.bottomPadding + parseInt($("#wrapper").css("margin-bottom"));
-			if (animate === false ) {
-				$("body").css({"height":(offset.top + element.height() + padding) + "px"});
-				//if (strickle.autoScroll) $.scrollTo("."+id);
+			if (animate === false || typeof animate == "object") {
+				$("body").animate({"height":(offset.top + element.height() + padding) + "px"}, 500);
 				return;
 			}
-			$("body").animate({"height":(offset.top + element.height() + padding) + "px"}, 100, function() {
-				if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration:300});
-			});
+			var thisHandle = this;
+			function complete() {
+				thisHandle.visibility();
+				thisHandle.tabIndex();
+				$("body").css({"height":(offset.top + element.height() + padding) + "px"});
+				if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
+			}
+			if (this.config._waitForEvent) {
+				Adapt.once(this.config._waitForEvent, complete);
+			} else {
+				complete();
+			}
 		},
 		visibility: function() {
-			if (strickle.pageView === undefined) return;
-			for(var i = 0; i < this.currentIndex + 1; i++) {
-				var child = this.children[i];
+			if (this.currentIndex == -1) {
+				for (var i = 0; i < this.allchildren.models.length; i++) {
+					var child = this.allchildren.models[i];
 					child.set("_isVisible", true, { pluginName: "strickle" });
+					child.getParent().set("_isVisible", true, { pluginName: "strickle" });
 				}
-			for(var i = this.currentIndex + 1; i < this.children.length; i++) {
-				var child = this.children[i];
+			} else {
+				var currentId = this.currentModel.get("_id");
+				var before = true;
+				var visibleBlocks = {};
+				var invisibleBlocks = {};
+				for (var i = 0; i < this.allchildren.models.length; i++) {
+					var child = this.allchildren.models[i];
+					if (before) {
+						child.set("_isVisible", true, { pluginName: "strickle" });
+						child.getParent().set("_isVisible", true, { pluginName: "strickle" });
+						visibleBlocks[child.getParent().get("_id")] = true;;
+					} else {
 						child.set("_isVisible", false, { pluginName: "strickle" });
+						if (!visibleBlocks[child.getParent().get("_id")]) {
+							invisibleBlocks[child.getParent().get("_id")] = true;
+						}
+					}
+					if (child.get("_id") == currentId) {
+						before = false;
+					}
+				}
+				//console.log(visibleBlocks);
+				//console.log(invisibleBlocks);
+				_.each(invisibleBlocks, function (isVisible, blockId) {
+					Adapt.findById(blockId).set("_isVisible", false, { pluginName: "strickle" });
+				});
 			}
 		},
 		tabIndex: function() {
@@ -115,7 +192,6 @@ define(function(require) {
 		if (strickle.isOn) {
 			strickle.isOn = false;
 			$("body").css({"height": "auto"});
-			$("html").removeClass("strickle");
 		}
 	});
 
@@ -127,11 +203,11 @@ define(function(require) {
 			if (strickle.isOn) {
 				strickle.isOn = false;
 				$("body").css({"height": "auto"});
-				$("html").removeClass("strickle");
 			}
 			return;
 		}
 		var config = pageModel.get("_strickle");
+		strickle.config = config;
 		if (config._isEnabled !== true && config._isEnabled !== undefined ) return;
 		strickle.isOn = true;
 
@@ -157,9 +233,12 @@ define(function(require) {
 				return true;
 			});
 
+			var allchildren = pageModel.findDescendants("components");
+
 			strickle.pageView = pageView;
-			strickle.attach(children);
-			strickle.currentModel = children[0];
+			strickle.attach(children, allchildren);
+			
+
 			_.delay(function() { strickle.resize(false); } , 500)
 
 		}, window, pageView));

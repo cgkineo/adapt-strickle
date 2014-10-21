@@ -126,7 +126,7 @@ define(function(require) {
 				thisHandle.visibility();
 				thisHandle.tabIndex();
 				if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
-					$("body").css({"height": "auto"});
+					$("body").css({"height": ""});
 				} else {	
 					$("body").css({"height":(offset.top + element.height() + padding) + "px"});
 				}
@@ -206,7 +206,7 @@ define(function(require) {
 	Adapt.on('menuView:postRender', function(menuView) {
 		if (strickle.isOn) {
 			strickle.isOn = false;
-			$("body").css({"height": "auto"});
+			$("body").css({"height": ""});
 		}
 	});
 
@@ -217,7 +217,7 @@ define(function(require) {
 		if (pageModel.get("_strickle") === undefined) {
 			if (strickle.isOn) {
 				strickle.isOn = false;
-				$("body").css({"height": "auto"});
+				$("body").css({"height": ""});
 			}
 			return;
 		}

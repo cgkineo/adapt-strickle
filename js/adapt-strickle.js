@@ -79,7 +79,8 @@ define(function(require) {
 			strickle.pageView = undefined;
 			strickle.currentIndex = -1;
 		},
-		onInteractionComplete: function(child) {
+		onInteractionComplete: function(child, value) {
+			if (!value) return;
 			strickle.autoScroll = true;
 			var currentStrickleId = strickle.children[strickle.currentIndex].get("_id");
 			var nextScrollTo = undefined;

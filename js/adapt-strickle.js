@@ -41,10 +41,18 @@ define(function(require) {
 							strickle.resize(false);
 							if (strickle.config._waitForEvent) {
 								Adapt.once(strickle.config._waitForEvent, function() {
+									if (strickle.currentModel === undefined) return;
 									Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+									if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
+										strickle.detach();
+									}
 								});
 							} else {
+								if (strickle.currentModel === undefined) return;
 								Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+								if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
+									strickle.detach();
+								}
 							}
 						});
 					})
@@ -62,6 +70,7 @@ define(function(require) {
 			if (this.children === undefined) return;
 			if (this.children.length === 0) return;
 			_.each(this.children, function(child) {
+				strickle.stopListening(child, 'change:_attemptsLeft');
 				strickle.stopListening(child, 'change:_isInteractionsComplete');
 			});
 			strickle.children = undefined;
@@ -82,13 +91,12 @@ define(function(require) {
 			}
 			strickle.currentIndex++;
 			if (nextScrollTo === undefined) {
-				strickle.detach();
+				//strickle.detach();
 				strickle.resize();
 				//strickle.visibility();
 				return;
 			}
 			if (strickle.currentIndex == strickle.children.length) {
-				strickle.detach();
 				strickle.currentModel = nextScrollTo;
 			} else {
 				strickle.currentModel = strickle.children[strickle.currentIndex];
@@ -116,7 +124,11 @@ define(function(require) {
 			function complete() {
 				thisHandle.visibility();
 				thisHandle.tabIndex();
-				$("body").css({"height":(offset.top + element.height() + padding) + "px"});
+				if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
+					$("body").css({"height": "auto"});
+				} else {	
+					$("body").css({"height":(offset.top + element.height() + padding) + "px"});
+				}
 				if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
 			}
 			if (this.config._waitForEvent) {
@@ -162,28 +174,30 @@ define(function(require) {
 		},
 		tabIndex: function() {
 			if (strickle.pageView === undefined) return;
-			for(var i = 0; i < this.currentIndex + 1; i++) {
-				var child = this.children[i];
-				var component = strickle.pageView.$el.find("."+child.get("_id"));
-				if (component.length ===0) continue;
-				component.find("button,a,input,select").attr("tabindex","");
-			}
-			for(var i = this.currentIndex + 1; i < this.children.length; i++) {
-				var child = this.children[i];
-				var component = strickle.pageView.$el.find("."+child.get("_id"));
-				if (component.length ===0) continue;
-				component.find("button,a,input,select").attr("tabindex","-1");
-			}
+			if (this.currentIndex < this.children.length) {
+				for(var i = 0; i < this.currentIndex + 1; i++) {
+					var child = this.children[i];
+					var component = strickle.pageView.$el.find("."+child.get("_id"));
+					if (component.length ===0) continue;
+					component.find("button,a,input,select").attr("tabindex","");
+				}
+				for(var i = this.currentIndex + 1; i < this.children.length; i++) {
+					var child = this.children[i];
+					var component = strickle.pageView.$el.find("."+child.get("_id"));
+					if (component.length ===0) continue;
+					component.find("button,a,input,select").attr("tabindex","-1");
+				}
 
-			var blockId = this.children[this.currentIndex].get("_parentId");
-			var postSiblings = strickle.pageView.$el.find("."+blockId + " ~ *");
-			if (this.currentIndex < this.children.length -1) postSiblings.find("button,a,input,select").attr("tabindex", "-1");
-			else postSiblings.find("button,a,input,select").attr("tabindex", "");
+				var blockId = this.children[this.currentIndex].get("_parentId");
+				var postSiblings = strickle.pageView.$el.find("."+blockId + " ~ *");
+				if (this.currentIndex < this.children.length -1) postSiblings.find("button,a,input,select").attr("tabindex", "-1");
+				else postSiblings.find("button,a,input,select").attr("tabindex", "");
 
-			var articleId = Adapt.findById(blockId).get("_parentId");
-			var postSiblings = strickle.pageView.$el.find("."+articleId + " ~ *");
-			if (this.currentIndex < this.children.length -1) postSiblings.find("button,a,input,select").attr("tabindex", "-1");
-			else postSiblings.find("button,a,input,select").attr("tabindex", "");
+				var articleId = Adapt.findById(blockId).get("_parentId");
+				var postSiblings = strickle.pageView.$el.find("."+articleId + " ~ *");
+				if (this.currentIndex < this.children.length -1) postSiblings.find("button,a,input,select").attr("tabindex", "-1");
+				else postSiblings.find("button,a,input,select").attr("tabindex", "");
+			}
 		}
 	});
 	strickle = new strickle();

@@ -118,7 +118,11 @@ define(function(require) {
 			id = STRIfIdOffsetHiddenReturnParentId(id);
 			var padding = this.bottomPadding + parseInt($("#wrapper").css("margin-bottom"));
 			if (animate === false || typeof animate == "object") {
-				$("body").animate({"height":(offset.top + element.height() + padding) + "px"}, 500);
+				if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
+					$("body").css({"height": ""});
+				} else {
+					$("body").animate({"height":(offset.top + element.height() + padding) + "px"}, 500);
+				}
 				return;
 			}
 			var thisHandle = this;

@@ -139,7 +139,7 @@ define(function(require) {
 			}
 		},
 		visibility: function() {
-			if (this.currentIndex == -1) {
+			if (this.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
 				for (var i = 0; i < this.allchildren.models.length; i++) {
 					var child = this.allchildren.models[i];
 					child.set("_isVisible", true, { pluginName: "strickle" });

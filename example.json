@@ -22,5 +22,6 @@
 //To got in the component.json file
 //skips trickle on the component
 "_strickle": {
-    "_isEnabled": false
+    "_isEnabled": false,
+    "_autoScroll": true
 }

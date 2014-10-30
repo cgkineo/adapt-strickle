@@ -45,17 +45,18 @@ define(function(require) {
 							var element = $("." + strickle.currentModel.get("_id"));
 							if (element.length === 0) return;
 							strickle.resize(false);
+							var disabled = (strickle.currentModel.get("_strickle") !== undefined && strickle.currentModel.get("_strickle")._autoScroll === false);
 							if (strickle.config._waitForEvent) {
 								Adapt.once(strickle.config._waitForEvent, function() {
 									if (strickle.currentModel === undefined) return;
-									if (strickle.autoScroll) Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+									if (strickle.autoScroll && !disabled) Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
 									if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
 										strickle.detach();
 									}
 								});
 							} else {
 								if (strickle.currentModel === undefined) return;
-								if (strickle.autoScroll) Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
+								if (strickle.autoScroll && !disabled) Adapt.navigateToElement("." + strickle.currentModel.get("_id"));
 								if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
 									strickle.detach();
 								}
@@ -69,6 +70,8 @@ define(function(require) {
 				}
 			});
 			strickle.currentModel = initial;
+			strickle.nextScrollTo = initial;
+			strickle.prevScrollTo = initial;
 			this.visibility();
 		},
 		detach: function() {
@@ -89,6 +92,8 @@ define(function(require) {
 		},
 		onInteractionComplete: function(child, value) {
 			if (!value) return;
+			if (strickle.currentIndex >= strickle.children.length) return;
+			
 			strickle.autoScroll = strickle.config._autoScroll !== undefined 
 										? strickle.config._autoScroll
 										: true;
@@ -112,6 +117,7 @@ define(function(require) {
 			} else {
 				strickle.currentModel = strickle.children[strickle.currentIndex];
 			}
+			strickle.prevScrollTo = strickle.nextScrollTo;
 			strickle.nextScrollTo = nextScrollTo;
 			//console.log("interaction complete" + child.get("_id"));
 			strickle.resize();
@@ -147,9 +153,10 @@ define(function(require) {
 				} else {	
 					$("body").css({"height":(offset.top + element.height() + padding) + "px"});
 				}
-				if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
+				var disabled = (strickle.prevScrollTo.get("_strickle") !== undefined && strickle.prevScrollTo.get("_strickle")._autoScroll === false);
+				if (strickle.autoScroll && !disabled) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
 			}
-			if (this.config._waitForEvent) {
+			if (this.config._waitForEvent && strickle.prevScrollTo.get("_feedback") && (strickle.currentIndex != -1 && strickle.currentIndex != strickle.children.length)) {
 				Adapt.once(this.config._waitForEvent, complete);
 			} else {
 				complete();
@@ -219,13 +226,16 @@ define(function(require) {
 		},
 		onArticleRevealing: function(view) {
 			strickle.articleRevealingInterval = setInterval(function() {
+				console.log("revealing");
 				strickle.resize(false);
 			},1);
+			console.log("revealing");
+			strickle.resize(false);
 		},
 		onArticleRevealed: function(view) {
+			console.log("revealed");
 			clearInterval(strickle.articleRevealingInterval);
-			
-			
+			strickle.resize(false);	
 		}
 	});
 	strickle = new strickle();

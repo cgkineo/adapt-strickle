@@ -37,7 +37,7 @@ define(function(require) {
 			if (this.children.length === 0) return;
 			var initial;
 			_.each(children, function(child, index) {
-				if (!child.get("_isSubmitted")) {
+				if (!child.get("_isSubmitted") && !child.get("_isComplete")) {
 					strickle.listenTo(child, 'change:_isInteractionsComplete', strickle.onInteractionComplete);
 					strickle.listenTo(child, 'change:_attemptsLeft', function(model) {
 						_.defer(function() {
@@ -112,7 +112,7 @@ define(function(require) {
 				//strickle.visibility();
 				return;
 			}
-			if (strickle.currentIndex == strickle.children.length) {
+			if (strickle.currentIndex >= strickle.children.length - 1) {
 				strickle.currentModel = nextScrollTo;
 			} else {
 				strickle.currentModel = strickle.children[strickle.currentIndex];
@@ -141,14 +141,18 @@ define(function(require) {
 
 			var padding = this.bottomPadding + parseInt($("#wrapper").css("margin-bottom"));
 			if (animate === false || typeof animate == "object") {
-				$("body").css({"height":(offset.top + element.height() + padding) + "px"});
+				if (strickle.currentIndex == -1 || strickle.currentIndex >= strickle.children.length - 1) {
+					$("body").css({"height": ""});
+				} else {
+					$("body").css({"height":(offset.top + element.height() + padding) + "px"});
+				}
 				return;
 			}
 			var thisHandle = this;
 			function complete() {
 				thisHandle.visibility();
 				thisHandle.tabIndex();
-				if (strickle.currentIndex == -1 || strickle.currentIndex == strickle.children.length) {
+				if (strickle.currentIndex == -1 || strickle.currentIndex >= strickle.children.length - 1) {
 					$("body").css({"height": ""});
 				} else {	
 					$("body").css({"height":(offset.top + element.height() + padding) + "px"});
@@ -156,14 +160,14 @@ define(function(require) {
 				var disabled = (strickle.prevScrollTo.get("_strickle") !== undefined && strickle.prevScrollTo.get("_strickle")._autoScroll === false);
 				if (strickle.autoScroll && !disabled) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
 			}
-			if (this.config._waitForEvent && strickle.prevScrollTo.get("_feedback") && (strickle.currentIndex != -1 && strickle.currentIndex != strickle.children.length)) {
+			if (this.config._waitForEvent && strickle.prevScrollTo.get("_feedback") && (strickle.currentIndex > -1 && strickle.currentIndex < strickle.children.length - 1)) {
 				Adapt.once(this.config._waitForEvent, complete);
 			} else {
 				complete();
 			}
 		},
 		visibility: function() {
-			if (this.currentIndex == -1) {
+			if (this.currentIndex == -1 || strickle.currentIndex >= strickle.children.length - 1) {
 				for (var i = 0; i < this.allchildren.length; i++) {
 					var child = this.allchildren[i];
 					child.set("_isVisible", true, { pluginName: "strickle" });

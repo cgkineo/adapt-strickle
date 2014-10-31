@@ -17,7 +17,7 @@
 
 //To got in the component.json file
 //skips trickle on the component
-//see pageMenuRouter for help on _scrollTo
+
 "_strickle": {
     "_isEnabled": false,
     "_autoScroll": true
@@ -25,6 +25,7 @@
 
 
 //To go in component.json file if you need a trickle style button
+//see https://github.com/cgkineo/adapt-pageMenuRouter for help on _scrollTo
 {
     "_id":"c-20",
     "_parentId":"b-15",

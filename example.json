@@ -11,11 +11,7 @@
     "_autoScroll": true,
     "_bottomPadding": 20,
     "_animateSpeed": 1000,
-    "_waitForEvent": "tutor:closed",
-    "_ignoreComponents": [
-        "blank",
-        "text"
-    ]
+    "_isDefaultOn": true
 },
 
 

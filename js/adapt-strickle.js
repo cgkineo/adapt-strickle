@@ -10,6 +10,7 @@ define(function(require) {
 	var Backbone = require('backbone');
 
 	require('extensions/adapt-strickle/js/_hacks');
+	require('extensions/adapt-strickle/js/strickle-button');
 
 	var strickle = Backbone.View.extend({
 		isOn: false,
@@ -36,7 +37,7 @@ define(function(require) {
 			if (this.children === undefined) return;
 			if (this.children.length === 0) return;
 			var next;
-			var defaultOn = strickle.config._isDefaultOn || true;
+			var defaultOn = strickle.config._isDefaultOn === undefined ? true : strickle.config._isDefaultOn;
 			strickle.prevIndex = strickle.currentIndex;
 			for (var i = strickle.currentIndex + 1; i < this.children.length; i++) {
 				var child = this.children[i];
@@ -45,10 +46,13 @@ define(function(require) {
 					next = child;
 					this.currentIndex = i;
 					break;
-				} else if (!defaultOn && child.get("_strickle") !== undefined && child.get("_strickle")._isEnabled !== false) {
-					next = child;
-					this.currentIndex = i;
-					break;
+				} else if (!defaultOn) {
+
+					if (child.get("_strickle") !== undefined && child.get("_strickle")._isEnabled !== false) {
+						next = child;
+						this.currentIndex = i;
+						break;
+					}
 				}
 			};
 			if (next === undefined) {
@@ -157,7 +161,9 @@ define(function(require) {
 			if (initial === true || typeof initial == "object") return;
 
 			var scrollChild = this.children[this.prevIndex];
-			if ( (strickle.config._autoScroll && (scrollChild.get("_strickle") === undefined || scrollChild.get("_strickle")._autoScroll !== false) ) || (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._autoScroll === true ) ) {
+			if (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._scrollTo && Adapt.pageMenuRouter) {
+				Adapt.pageMenuRouter.routeTo.call({model:scrollChild}, undefined, scrollChild.get("_strickle")._scrollTo )
+			} else if ( (strickle.config._autoScroll && (scrollChild.get("_strickle") === undefined || scrollChild.get("_strickle")._autoScroll !== false) ) || (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._autoScroll === true ) ) {
 				Adapt.navigateToElement("."+id, {duration: strickle.config._animateSpeed || 200, axis: 'y'});
 			}
 

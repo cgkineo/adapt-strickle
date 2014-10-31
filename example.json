@@ -17,7 +17,31 @@
 
 //To got in the component.json file
 //skips trickle on the component
+//see pageMenuRouter for help on _scrollTo
 "_strickle": {
     "_isEnabled": false,
     "_autoScroll": true
 }
+
+
+//To go in component.json file if you need a trickle style button
+{
+    "_id":"c-20",
+    "_parentId":"b-15",
+    "_type":"component",
+    "_component":"strickle-button",
+    "_classes":"",
+    "_layout":"full",
+    "title":"",
+    "displayTitle":"Continue button ",
+    "body":"Continue button",
+    "instruction":"",
+    "_pageLevelProgress": {
+        "_isEnabled": true
+    },
+    "_strickle": {
+        "_isEnabled": true,
+        "_scrollTo": "@component +1",
+    	"_fixedBottomButton": true
+    }
+},

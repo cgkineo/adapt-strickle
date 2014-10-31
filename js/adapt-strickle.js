@@ -170,6 +170,10 @@ define(function(require) {
 				Adapt.navigateToElement("."+id, {duration: strickle.config._animateSpeed || 200, axis: 'y'});
 			}
 
+			if (strickle.isEnd) {
+				strickle.detach();
+			}
+
 			//if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
 		},
 		visibility: function() {

@@ -19,4 +19,4 @@ Only specified components in strickle
   
 Compatible with accessibilty  
 
-
+Optional dependency on: [https://github.com/cgkineo/adapt-pageMenuRouter](adapt-pageMenuRouter)

@@ -43,6 +43,7 @@
     "_strickle": {
         "_isEnabled": true,
         "_scrollTo": "@component +1",
-    	"_fixedBottomButton": true
+    	"_fixedBottomButton": true,
+        "_showArticlePadding": false
     }
 },

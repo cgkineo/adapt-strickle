@@ -154,6 +154,9 @@ define(function(require) {
 
 			var offset = element.offset();
 			var padding = (this.config._bottomPadding || 20) + parseInt($("#wrapper").css("margin-bottom"));
+			if (child.get("_strickle") && child.get("_strickle")._showArticlePadding) {
+				padding += parseInt(this.pageView.$("." + child.getParent().getParent().get("_id")).css("padding-bottom"));
+			}
 
 			if (strickle.isEnd) $("body").css({"height": ""});
 			else $("body").css({"height":(offset.top + element.height() + padding) + "px"});

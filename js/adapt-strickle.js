@@ -67,7 +67,7 @@ define(function(require) {
 
 			strickle.stopListening();
 
-			if (model._feedback && waitforEvents.indexOf("tutor") == -1) {
+			if (model._feedback && model._canShowFeedback !== false &&  waitforEvents.indexOf("tutor") == -1) {
 				waitforEvents.unshift("tutor");
 			}
 

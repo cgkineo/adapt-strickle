@@ -15,6 +15,7 @@ define(function(require) {
 		isOn: false,
 		children: undefined,
 		pageView: undefined,
+		prevIndex: -1,
 		currentIndex: -1,
 		isEnd: false,
 		config: undefined,
@@ -36,6 +37,7 @@ define(function(require) {
 			if (this.children.length === 0) return;
 			var next;
 			var defaultOn = strickle.config._isDefaultOn || true;
+			strickle.prevIndex = strickle.currentIndex;
 			for (var i = strickle.currentIndex + 1; i < this.children.length; i++) {
 				var child = this.children[i];
 				if (child.get("_isSubmitted") || child.get("_isComplete") ) continue;
@@ -154,7 +156,8 @@ define(function(require) {
 
 			if (initial === true || typeof initial == "object") return;
 
-			if ( (strickle.config._autoScroll && (child.get("_strickle") === undefined || child.get("_strickle")._autoScroll !== false) ) || (child.get("_strickle") !== undefined && child.get("_strickle")._autoScroll === true ) ) {
+			var scrollChild = this.children[this.prevIndex];
+			if ( (strickle.config._autoScroll && (scrollChild.get("_strickle") === undefined || scrollChild.get("_strickle")._autoScroll !== false) ) || (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._autoScroll === true ) ) {
 				Adapt.navigateToElement("."+id, {duration: strickle.config._animateSpeed || 200, axis: 'y'});
 			}
 

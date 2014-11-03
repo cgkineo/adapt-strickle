@@ -22,10 +22,10 @@ define(function(require) {
 		config: undefined,
 		events: [],
 		start: function(children) {
-			strickle.listenTo(Adapt, "article:revealing", function(view) {
+			Adapt.on("article:revealing", function(view) {
 				strickle.onArticleRevealing(view);
 			});
-			strickle.listenTo(Adapt, "article:revealed", function(view) {
+			Adapt.on("article:revealed", function(view) {
 				strickle.onArticleRevealed(view);
 			});
 			$("html").addClass("strickle");
@@ -117,7 +117,6 @@ define(function(require) {
 			});
 			isOn: false,
 			strickle.children = undefined;
-			strickle.pageView = undefined;
 			strickle.currentIndex = -1;
 			strickle.config = undefined;
 			strickle.events = [];
@@ -125,6 +124,10 @@ define(function(require) {
 			strickle.stopListening();
 		},
 		resize: function(initial) {
+			if (this.currentIndex == -1) {
+				$("body").css({"height": ""});
+				return;
+			}
 			var id;
 			var child;
 			if (strickle.isEnd) {
@@ -304,13 +307,11 @@ define(function(require) {
 			}
 		},
 		onArticleRevealing: function(view) {
-			strickle.articleRevealingInterval = setInterval(function() {
-				strickle.resize(true);
-			},1);
-			strickle.resize(true);
+			if (strickle.pageView === undefined) return;
+			$("body").css({"height": ""});
 		},
 		onArticleRevealed: function(view) {
-			clearInterval(strickle.articleRevealingInterval);
+			if (strickle.pageView === undefined) return;
 			strickle.resize(true);	
 		},
 		refit: function(initial) {
@@ -324,6 +325,7 @@ define(function(require) {
 	strickle = new strickle();
 
 	Adapt.on('menuView:postRender', function(menuView) {
+		strickle.pageView = undefined;
 		strickle.detach();
 	});
 
@@ -331,6 +333,7 @@ define(function(require) {
 	Adapt.on('pageView:ready', function(pageView) {
 
 		var pageModel = pageView.model;
+		strickle.pageView = undefined;
 		strickle.detach();
 		if (pageModel.get("_strickle") === undefined) return;
 

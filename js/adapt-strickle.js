@@ -10,6 +10,7 @@ define(function(require) {
 	var Backbone = require('backbone');
 
 	require('extensions/adapt-strickle/js/_hacks');
+	require('extensions/adapt-strickle/js/dom-resize-event');
 	require('extensions/adapt-strickle/js/strickle-button');
 
 	var strickle = Backbone.View.extend({
@@ -28,6 +29,7 @@ define(function(require) {
 			Adapt.on("article:revealed", function(view) {
 				strickle.onArticleRevealed(view);
 			});
+
 			$("html").addClass("strickle");
 			strickle.autoScroll = false;
 			this.children = children;
@@ -352,7 +354,7 @@ define(function(require) {
 		}, window));
 	});
 
-	Adapt.on('device:resize', function() {
+	var triggerResize = function() {
 		_.defer(function(){
 			if (strickle.pauseFor) {
 				setTimeout( function() {
@@ -362,7 +364,10 @@ define(function(require) {
 				strickle.resize(true);
 			}
 		});
-	});
+	};
+
+	$("#wrapper").on("resize", triggerResize);
+	Adapt.on('device:resize', triggerResize);
 
 	return strickle;
 

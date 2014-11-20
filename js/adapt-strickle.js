@@ -43,7 +43,7 @@ define(function(require) {
 			strickle.prevIndex = strickle.currentIndex;
 			for (var i = strickle.currentIndex + 1; i < this.children.length; i++) {
 				var child = this.children[i];
-				if (child.get("_isSubmitted") || child.get("_isComplete") ) continue;
+				if (child.get("_isSubmitted") || (child.get("_isQuestionType") !== true && child.get("_isComplete")) ) continue;
 				if (defaultOn && (child.get("_strickle") === undefined || child.get("_strickle")._isEnabled !== false))  {
 					next = child;
 					this.currentIndex = i;
@@ -61,7 +61,11 @@ define(function(require) {
 				strickle.isEnd = true;
 			}
 			this.attach();
-			this.refit(initial);
+			this.refit(initial, function() {
+				if (next !== undefined && !initial) {
+					Adapt.popupManager.focusOnId(child.get("_id"));
+				}
+			});
 		},
 		attach: function() {
 			if (this.currentIndex == -1 || strickle.isEnd) return;
@@ -155,8 +159,6 @@ define(function(require) {
 			var element = $("." + id);
 			if (element.length === 0) return;
 
-			console.log("resizing to : " + id);
-
 			var offset = element.offset();
 			var padding = (this.config._bottomPadding || 20) + parseInt($("#wrapper").css("margin-bottom"));
 			if (child.get("_strickle") && child.get("_strickle")._showArticlePadding) {
@@ -182,6 +184,7 @@ define(function(require) {
 			//if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
 		},
 		visibility: function() {
+			if (this.currentIndex == -1) return;
 			if (strickle.isEnd) {
 				for (var i = 0; i < this.children.length; i++) {
 					var child = this.children[i];
@@ -316,11 +319,12 @@ define(function(require) {
 			if (strickle.pageView === undefined) return;
 			strickle.resize(true);	
 		},
-		refit: function(initial) {
+		refit: function(initial, callback) {
 			_.defer(function(){
 				strickle.visibility();
 				strickle.resize(initial);
-				strickle.tabIndex();	
+				strickle.tabIndex();
+				if (typeof callback == "function") callback();
 			});
 		}
 	});

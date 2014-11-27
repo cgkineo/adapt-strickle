@@ -19,9 +19,15 @@
     if (win.__resizeRAF__) cancelFrame(win.__resizeRAF__);
     win.__resizeRAF__ = requestFrame(function(){
       var trigger = win.__resizeTrigger__;
-      trigger.__resizeListeners__.forEach(function(fn){
-        fn.call(trigger, e);
-      });
+      if (trigger.__resizeListeners__.forEach === undefined) {
+        for (var i = 0; i < trigger.__resizeListeners__.length; i++) {
+          trigger.__resizeListeners__[i].call(trigger, e);
+        }
+      } else {
+        trigger.__resizeListeners__.forEach(function(fn){
+          fn.call(trigger, e);
+        });
+      }
     });
   }
   

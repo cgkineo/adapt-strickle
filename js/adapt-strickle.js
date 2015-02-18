@@ -4,374 +4,394 @@
 * Maintainers - Oliver Foster <oliver.foster@kineo.com>
 */
 
-define(function(require) {
+define([
+	'require', 
+	"./DataTypes/StructureType", 
+	'./strickle-button',
+	'./utils',
+	'./dom-resize-event'
+	], function(require, StructureType, STrickleButton, utils) {
 
 	var Adapt = require('coreJS/adapt');
 	var Backbone = require('backbone');
 
-	require('extensions/adapt-strickle/js/_hacks');
-	require('extensions/adapt-strickle/js/dom-resize-event');
-	require('extensions/adapt-strickle/js/strickle-button');
-
-	var strickle = Backbone.View.extend({
-		isOn: false,
-		children: undefined,
-		pageView: undefined,
-		prevIndex: -1,
-		currentIndex: -1,
-		isEnd: false,
-		config: undefined,
-		events: [],
-		start: function(children) {
-			Adapt.on("article:revealing", function(view) {
-				strickle.onArticleRevealing(view);
-			});
-			Adapt.on("article:revealed", function(view) {
-				strickle.onArticleRevealed(view);
-			});
-
-			$("html").addClass("strickle");
-			strickle.autoScroll = false;
-			this.children = children;
-			this.next(true);
-		},
-		next: function(initial) {
-			if (this.children === undefined) return;
-			if (this.children.length === 0) return;
-			var next;
-			var defaultOn = strickle.config._isDefaultOn === undefined ? true : strickle.config._isDefaultOn;
-			strickle.prevIndex = strickle.currentIndex;
-			for (var i = strickle.currentIndex + 1; i < this.children.length; i++) {
-				var child = this.children[i];
-				if (child.get("_isSubmitted") || (child.get("_isQuestionType") !== true && child.get("_isComplete")) ) continue;
-				if (defaultOn && (child.get("_strickle") === undefined || child.get("_strickle")._isEnabled !== false))  {
-					next = child;
-					this.currentIndex = i;
-					break;
-				} else if (!defaultOn) {
-
-					if (child.get("_strickle") !== undefined && child.get("_strickle")._isEnabled !== false) {
-						next = child;
-						this.currentIndex = i;
-						break;
-					}
-				}
-			};
-			if (next === undefined) {
-				strickle.isEnd = true;
-			}
-			this.attach();
-			this.refit(initial, function() {
-				if (next !== undefined && !initial) {
-					Adapt.popupManager.focusOnId(child.get("_id"));
-				}
-			});
-		},
-		attach: function() {
-			if (this.currentIndex == -1 || strickle.isEnd) return;
-			var child = this.children[this.currentIndex];
-			var model = child.toJSON();
-			var waitForEvent;
-			if (model._strickle === undefined || model._strickle._waitForEvent === undefined) waitForEvent = "interactionsComplete";
-			var waitforEvents = waitForEvent.split(" ");
-
-			strickle.stopListening();
-
-			if (model._feedback && model._canShowFeedback !== false &&  waitforEvents.indexOf("tutor") == -1) {
-				waitforEvents.unshift("tutor");
-			}
-
-			for (var i =0 ; i < waitforEvents.length; i++) {
-				switch(waitforEvents[i]) {
-				case "interactionsComplete":
-					strickle.events.push({
-						on: child, 
-						eventName: "change:_isInteractionsComplete", 
-						callback: this.onEvent
-					});
-					break;
-				case "tutor":
-					strickle.events.push({
-						on: Adapt, 
-						eventName: "tutor:closed", 
-						callback: this.onEvent
-					});
-					break;
-				default:
-					throw "Event not defined for strickle use";
-				}
-			}
-
-
-			var initialEvent = strickle.events.pop();
-			strickle.listenToOnce(	initialEvent.on, initialEvent.eventName, initialEvent.callback );
-		},
-		onEvent: function () {
-			if (strickle.events.length > 0) {
-				var initialEvent = strickle.events.pop();
-				strickle.listenToOnce(	initialEvent.on, initialEvent.eventName, initialEvent.callback );
-				return;
-			} else {
-				this.next();
-			}
-		},
-		detach: function() {
-			$("html").removeClass("strickle");
-			strickle.isOn = false;
-			$('body').css({
-				height: ""
-			});
-			isOn: false,
-			strickle.children = undefined;
-			strickle.currentIndex = -1;
-			strickle.config = undefined;
-			strickle.events = [];
-			strickle.isEnd = false;
-			strickle.stopListening();
-		},
-		resize: function(initial) {
-			if (this.currentIndex == -1) {
-				$("body").css({"height": ""});
-				return;
-			}
-			var id;
-			var child;
-			if (strickle.isEnd) {
-				if (this.currentIndex+1 <= this.children.length - 1) {
-					id = this.children[this.currentIndex+1].get("_id");
-					child = this.children[this.currentIndex+1];
-				} else {
-					id = this.children[this.currentIndex].get("_id");
-					child = this.children[this.currentIndex];
-				}
-			} else {
-				id = this.children[this.currentIndex].get("_id");
-				child = this.children[this.currentIndex];
-			}
-
-			var rid = "";
-			while(true) {
-				rid = STRIfIdOffsetHiddenReturnParentId(id);
-				if (id === rid) break;
-				id = rid;
-			}
-
-			var element = $("." + id);
-			if (element.length === 0) return;
-
-			var offset = element.offset();
-			var padding = (this.config._bottomPadding || 20) + parseInt($("#wrapper").css("margin-bottom"));
-			if (child.get("_strickle") && child.get("_strickle")._showArticlePadding) {
-				padding += parseInt(this.pageView.$("." + child.getParent().getParent().get("_id")).css("padding-bottom"));
-			}
-
-			if (strickle.isEnd) $("body").css({"height": ""});
-			else $("body").css({"height":(offset.top + element.height() + padding) + "px"});
-
-			if (initial === true || typeof initial == "object") return;
-
-			var scrollChild = this.children[this.prevIndex];
-			if (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._scrollTo && Adapt.pageMenuRouter) {
-				Adapt.pageMenuRouter.routeTo.call({model:scrollChild}, undefined, scrollChild.get("_strickle")._scrollTo )
-			} else if ( (strickle.config._autoScroll && (scrollChild.get("_strickle") === undefined || scrollChild.get("_strickle")._autoScroll !== false) ) || (scrollChild.get("_strickle") !== undefined && scrollChild.get("_strickle")._autoScroll === true ) ) {
-				Adapt.navigateToElement("."+id, {duration: strickle.config._animateSpeed || 200, axis: 'y'});
-			}
-
-			if (strickle.isEnd) {
-				strickle.detach();
-			}
-
-			//if (strickle.autoScroll) Adapt.navigateToElement("."+id, {duration: thisHandle.config._animateSpeed || 200, axis: 'y'});
-		},
-		visibility: function() {
-			if (this.currentIndex == -1) return;
-			if (strickle.isEnd) {
-				for (var i = 0; i < this.children.length; i++) {
-					var child = this.children[i];
-					child.set("_isVisible", true, { pluginName: "strickle" });
-					child.getParent().set("_isVisible", true, { pluginName: "strickle" });
-				}
-			} else {
-				var currentId = this.children[this.currentIndex].get("_id");
-				var before = true;
-				var visibleBlocks = {};
-				var invisibleBlocks = {};
-				for (var i = 0; i < this.children.length; i++) {
-					var child = this.children[i];
-					if (before || (child.get("_strickle") && child.get("_strickle")._isEnabled === false)) {
-						child.set("_isVisible", true, { pluginName: "strickle" });
-						child.getParent().set("_isVisible", true, { pluginName: "strickle" });
-						visibleBlocks[child.getParent().get("_id")] = true;;
-					} else {
-						child.set("_isVisible", false, { pluginName: "strickle" });
-						if (!visibleBlocks[child.getParent().get("_id")]) {
-							invisibleBlocks[child.getParent().get("_id")] = true;
-						}
-					}
-					if (child.get("_id") == currentId) {
-						before = false;
-					}
-				}
-				//console.log(visibleBlocks);
-				//console.log(invisibleBlocks);
-				_.each(invisibleBlocks, function (isVisible, blockId) {
-					Adapt.findById(blockId).set("_isVisible", false, { pluginName: "strickle" });
-				});
-			}
-		},
-		tabIndex: function() {
-			if (strickle.pageView === undefined) return;
-			if (this.currentIndex == -1) return;
-			if (strickle.isEnd) {
-
-				for(var i = 0; i < this.children.length; i++) {
-					var child = this.children[i];
-					var component = strickle.pageView.$el.find("."+child.get("_id"));
-					if (component.length ===0) continue;
-					var cmps = component.find("button,a,input,select");
-					cmps.each(function (index, item) {
-						var item = $(item);
-						if (item.attr("prevtabindex")) {
-							item.attr("tabindex", item.attr("prevtabindex"));
-							item.removeAttr("prevtabindex");
-						} else {
-							item.attr("tabindex", "");
-						}
-					});
-				}
-
-				var blockId = this.children[this.currentIndex].get("_parentId");
-				var postSiblings = strickle.pageView.$el.find("."+blockId + " ~ *");
-				var cmps = postSiblings.find("button,a,input,select");
-				cmps.each(function (index, item) {
-					var item = $(item);
-					if (item.attr("prevtabindex") !== undefined) {
-						item.attr("tabindex", item.attr("prevtabindex"));
-						item.removeAttr("prevtabindex");
-					} else {
-						item.attr("tabindex", "");
-					}
-				});
-
-				var articleId = Adapt.findById(blockId).get("_parentId");
-				var postSiblings = strickle.pageView.$el.find("."+articleId + " ~ *");
-				var cmps = postSiblings.find("button,a,input,select");
-				cmps.each(function (index, item) {
-					var item = $(item);
-					if (item.attr("prevtabindex") !== undefined) {
-						item.attr("tabindex", item.attr("prevtabindex"));
-						item.removeAttr("prevtabindex");
-					} else {
-						item.attr("tabindex", "");
-					}
-				});
-
-			} else {
-
-				for(var i = 0; i < this.currentIndex + 1; i++) {
-					var child = this.children[i];
-					var component = strickle.pageView.$el.find("."+child.get("_id"));
-					if (component.length ===0) continue;
-					var cmps = component.find("button,a,input,select");
-					cmps.each(function (index, item) {
-						var item = $(item);
-						if (item.attr("prevtabindex")) {
-							item.attr("tabindex", item.attr("prevtabindex"));
-							item.removeAttr("prevtabindex");
-						} else {
-							item.attr("tabindex", "");
-						}
-					});
-				}
-
-				var blockId = this.children[this.currentIndex].get("_parentId");
-				var postSiblings = strickle.pageView.$el.find("."+blockId + " ~ *");
-				var cmps = postSiblings.find("button,a,input,select");
-				cmps.each(function (index, item) {
-					var item = $(item);
-					if (item.attr("prevtabindex") !== undefined) {
-						item.attr("tabindex", -1);
-						return;
-					};
-					item.attr("prevtabindex", item.attr("tabindex") || 0);
-					item.attr("tabindex", -1);
-				});
-
-				var articleId = Adapt.findById(blockId).get("_parentId");
-				var postSiblings = strickle.pageView.$el.find("."+articleId + " ~ *");
-				var cmps = postSiblings.find("button,a,input,select");
-				cmps.each(function (index, item) {
-					var item = $(item);
-					if (item.attr("prevtabindex") !== undefined) {
-						item.attr("tabindex", -1);
-						return;
-					};
-					item.attr("prevtabindex", item.attr("tabindex") || 0);
-					item.attr("tabindex", -1);
-				});
-			}
-		},
-		onArticleRevealing: function(view) {
-			if (strickle.pageView === undefined) return;
-			$("body").css({"height": ""});
-		},
-		onArticleRevealed: function(view) {
-			if (strickle.pageView === undefined) return;
-			strickle.resize(true);	
-		},
-		refit: function(initial, callback) {
-			_.defer(function(){
-				strickle.visibility();
-				strickle.resize(initial);
-				strickle.tabIndex();
-				if (typeof callback == "function") callback();
-			});
-		}
-	});
-	strickle = new strickle();
-
-	Adapt.on('menuView:postRender', function(menuView) {
-		strickle.pageView = undefined;
-		strickle.detach();
-	});
-
-
-	Adapt.on('pageView:ready', function(pageView) {
-
-		var pageModel = pageView.model;
-		strickle.pageView = undefined;
-		strickle.detach();
-		if (pageModel.get("_strickle") === undefined) return;
-
-		var config = pageModel.get("_strickle");
-		strickle.config = config;
-		if (config._isEnabled !== true && config._isEnabled !== undefined ) return;
-		strickle.isOn = true;
-
-		_.defer( _.bind(function () {
-
-			var children = pageModel.findDescendants("components").models;
-
-			strickle.pageView = pageView;
-			strickle.start(children);
-
-		}, window));
-	});
-
-	var triggerResize = function() {
-		_.defer(function(){
-			if (strickle.pauseFor) {
-				setTimeout( function() {
-					strickle.resize(true);
-				}, strickle.pauseFor);
-			} else {
-				strickle.resize(true);
-			}
-		});
+	var defaultConfig = {
+		_isEnabled: false,
+		_duration: 500,
+		_autoScroll: true
 	};
 
-	$("#wrapper").on("resize", triggerResize);
-	Adapt.on('device:resize', triggerResize);
+	var STrickle = Backbone.View.extend({
+
+		initialize: function() {
+			this.listenToOnce(Adapt, "app:dataReady", this.onDataReady);
+		},
+
+		onDataReady: function() {
+			this.setupEventListeners();
+		},
+
+		setupEventListeners: function() {
+			this.listenTo(Adapt, "pageView:preRender", this.onPageInitialize);
+			this.listenTo(Adapt, "pageView:ready", this.onPageReady);
+			this.listenTo(Adapt, "tutor:opened", this.onTutorOpened);
+			this.listenTo(Adapt, "tutor:closed", this.onTutorClosed);
+			this.listenTo(Adapt, "strickle-button:locked", this.onStrickleButtonLocked);
+			this.listenTo(Adapt, "strickle-button:unlocked", this.onStrickleButtonUnlocked);
+			this.listenTo(Adapt, "componentView:postRender blockView:postRender articleView:postRender", this.onPostRender);
+			this.listenTo(Adapt.components, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
+			this.listenTo(Adapt.blocks, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
+			this.listenTo(Adapt.articles, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
+		},
+
+		onPageInitialize: function(view) {
+			this.initializePage(view);
+		},
+
+		onPageReady: function(view) {
+			console.log("STrickle onPageReady");
+			this.initializeStep();
+		},
+
+		initializePage: function(view) {
+			var pageId = view.model.get("_id");
+			var flatPageDescendants = utils.fetchAdaptStructureFlat(pageId, false);
+			var flatPageDescendantsJSON = utils.backboneModelArrayToJSONArray(flatPageDescendants);
+			var flatPageDescendantsParentFirst = utils.fetchAdaptStructureFlat(pageId, true);
+			var flatPageDescendantsParentFirstJSON = utils.backboneModelArrayToJSONArray(flatPageDescendantsParentFirst);
+			this.model.set("_flatPageDescendantsJSON", flatPageDescendantsJSON);
+			this.model.set("_flatPageDescendants", flatPageDescendants);
+			this.model.set("_flatPageDescendantsParentFirstJSON", flatPageDescendantsParentFirstJSON);
+			this.model.set("_flatPageDescendantsParentFirst", flatPageDescendantsParentFirst);
+			this.model.set("_currentIndex", 0);
+			this.model.set("_isFinished", false);
+			this.model.set("_isTutorClosed", false);
+			this.model.set("_isStrickleButtonLocked", false);
+
+		},
+
+		initializeStep: function() {
+			if (this.isFinished()) return;
+
+			var currentIndex = this.model.get("_currentIndex");
+			var flatPageDescendants = this.model.get("_flatPageDescendants");
+			for (var i = currentIndex, l = flatPageDescendants.length; i < l; i++) {
+				var descendant = flatPageDescendants[i];
+
+				if (!this.isDescendantStrickled(descendant)) continue;
+
+				this.model.set("_currentIndex", i);
+				this.model.set("_tutorClosed", false);
+
+				this.resizeToCurrentIndex();
+
+				$("html").addClass("strickle");
+
+				return;
+			}
+
+			this.model.set("_currentIndex", -1);
+			this.model.set("_isFinished", true);
+			$("html").removeClass("strickle");
+		},
+
+		isDescendantStrickled: function(descendantModel) {
+			if (!descendantModel.get("_strickle")) return false;
+			if (descendantModel.get("_isSubmitted" === true)) return false;
+			if (descendantModel.get("_isSubmitted" === false)) return true;
+			if (descendantModel.get("_isInteractionsComplete") === false) return true;
+			if (descendantModel.get("_isInteractionComplete") === false) return true;
+			if (descendantModel.get("_isComplete")) return false;
+
+			var descendantId = descendantModel.get("_id");
+			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
+			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
+			if (pageDescendantIds.indexOf( descendantId ) == -1) return false;
+
+
+			var descendantConfig = this.getDescendantConfig(descendantModel);
+			if (descendantConfig._isEnabled === false) return false;
+
+			return true;
+		},
+
+		getDescendantConfig: function(descendantModel) {
+			var descendantStrickleConfig = descendantModel.get("_strickle");
+			var descendantConfig = _.extend({}, defaultConfig,  descendantStrickleConfig);
+			return descendantConfig;
+		},
+
+		getDescendantIndex: function(descendantModel) {
+			var descendantId = descendantModel.get("_id");
+			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
+			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
+			var index = pageDescendantIds.indexOf( descendantId );
+			return index;
+		},
+
+		getCurrentDescendant: function() {
+			if (this.isFinished()) return;
+
+			var currentIndex = this.model.get("_currentIndex");
+
+			var flatPageDescendants = this.model.get("_flatPageDescendants");
+			var descendant = flatPageDescendants[currentIndex];
+
+			return descendant;
+		},
+
+		isFinished: function() {
+			var isFinished = this.model.get("_isFinished");
+			return isFinished;
+		},
+
+		resizeToCurrentIndex: function() {
+			if (this.isFinished()) return;
+
+			this.model.set("_isResizeListenerAttached", false);
+
+			this.hideElements();
+
+			var currentDescendant = this.getCurrentDescendant();
+			var currentDescendantId = currentDescendant.get("_id");
+			var currentDescendantElement = $("." + currentDescendantId);
+
+			if (currentDescendantElement.length === 0) return;
+
+			var currentDescendantOffset = currentDescendantElement.offset();
+
+			var currentDescendantBottomOffset = currentDescendantOffset.top + currentDescendantElement.height();
+
+			$('body').css("height", currentDescendantBottomOffset + "px");
+
+			
+			this.model.set("_isResizeListenerAttached", true);
+		},
+
+		hideElements: function() {
+			var currentDescendant = this.getCurrentDescendant();
+			var currentDescendantId = currentDescendant.get("_id");
+
+			var flatPageDescendantsParentFirstJSON = this.model.get("_flatPageDescendantsParentFirstJSON");
+			var pageDescendantIds = _.pluck(flatPageDescendantsParentFirstJSON, "_id");
+			var currentParentFirstIndex = pageDescendantIds.indexOf(currentDescendantId);
+
+			var jquerySelector;
+			var elementIdsAfterCurrent = [];
+			for (var i = currentParentFirstIndex + 1, l = pageDescendantIds.length; i < l; i++) {
+				elementIdsAfterCurrent.push("."+pageDescendantIds[i]);
+			}
+			jquerySelector = elementIdsAfterCurrent.join(",");
+			$( jquerySelector )
+				.addClass("strickle-hidden");
+
+			var elementIdsBeforeCurrent = [];
+			for (var i = 0, l = currentParentFirstIndex+1; i < l; i++) {
+				elementIdsBeforeCurrent.push("."+pageDescendantIds[i]);
+			}
+			jquerySelector = elementIdsBeforeCurrent.join(",");
+			$( jquerySelector )
+				.removeClass("strickle-hidden");
+			$("."+currentDescendantId)
+				.removeClass("strickle-hidden")
+				.find(".strickle-hidden")
+				.removeClass("strickle-hidden");
+
+			console.log("Unlocking to:")
+			console.log(currentDescendantId);
+		},
+
+		onWrapperResize: function() {
+			if (this.model.get("_isResizeListenerAttached") === true) 
+				this.resizeToCurrentIndex();
+		},
+
+		onPostRender: function(view) {
+			this.setupSection(view);
+		},
+
+		setupSection: function(view) {
+			if (this.isFinished()) return;
+
+			var descendant = view.model;
+			
+			if (descendant.get("_component") === "strickle-button") return;
+
+			if (!this.isDescendantStrickled(descendant)) return;
+			
+			this.setupSectionButton(descendant);
+		},
+
+		setupSectionButton: function(descendantModel) {
+			var descendantConfig = this.getDescendantConfig(descendantModel);
+			if (descendantConfig.button === undefined) return;
+
+			var descendantId = descendantModel.get("_id");
+			var descendantElement = $("." + descendantId);
+
+			switch (descendantConfig._buttonType) {
+			case undefined:
+				descendantConfig._buttonType = "fixed-bottom";
+				break;
+			}
+
+			var index = this.getDescendantIndex(descendantModel);
+
+			var buttonModel = new Backbone.Model({
+				_id: "strickle-button",
+				_type: "component",
+				_parentType: descendantModel.get("_type"),
+				_parentComponent: descendantModel.get("_component"),
+				_component: "strickle-button",
+				_strickle: descendantConfig,
+				_classes: "",
+				_layout: "full",
+				_isVisible: (descendantConfig._buttonType == "fixed-bottom") ? false : true,
+				_isAvailable: true,
+				_isEnabled: true,
+				_isComplete: descendantModel.get("_isComplete"),
+				_flatPageDescendantsJSON: this.model.get("_flatPageDescendantsJSON"),
+				_index: index
+			});
+
+			var buttonView = new STrickleButton({ model: buttonModel, nthChild: "additional" } );
+			descendantElement.append( buttonView.$el );
+
+			descendantModel.get("_strickle")._buttonView = buttonView;
+
+			this.listenToOnce(buttonModel, "change:_isComplete", this.onStrickleButtonComplete);
+
+		},
+
+		onComplete: function(model) {
+			this.sectionComplete(model);
+		},
+
+		sectionComplete: function(descendantModel) {
+			if (this.isFinished()) return;
+
+			var descendant = this.getCurrentDescendant();
+
+			if (descendant.get("_id") == descendantModel.get("_id")) {
+				var descendantStrickleConfig = descendant.get("_strickle");
+
+				if (descendantStrickleConfig._buttonView) {
+					if (!descendantStrickleConfig._buttonView.model.get("_isComplete")) {
+						descendantStrickleConfig._buttonView.model.set("_isVisible", true, {pluginName: "blank"} );
+						descendantStrickleConfig._buttonView.model.set("_isLocked", true);
+						descendantStrickleConfig._buttonView.model.set("_isEnabled", true);
+						return;
+					}
+				}
+					
+
+				if (!descendantModel.get("_isComplete")) return;
+				if (this.model.get("_isTutorOpen")) return;
+				if (this.model.get("_isStrickleButtonLocked")) return;
+				
+				this.initializeStep();
+
+				if (!descendantStrickleConfig._buttonView) {
+					this.scrollTo();
+				}
+			}
+		},
+
+		onTutorOpened: function() {
+			this.model.set("_isTutorOpen", true);
+		},
+
+		onTutorClosed: function() {
+			this.model.set("_isTutorOpen", false);
+
+			if (this.isFinished()) return;
+
+			var descendant = this.getCurrentDescendant();
+			
+			this.sectionComplete(descendant);
+
+		},
+
+		onStrickleButtonComplete: function() {
+			if (this.isFinished()) return;
+
+			var descendant = this.getCurrentDescendant();
+			
+			this.sectionComplete(descendant);
+		},
+
+		onStrickleButtonLocked: function() {
+			this.model.set("_isStrickleButtonLocked", true);
+		},
+
+		onStrickleButtonUnlocked: function() {
+			this.model.set("_isStrickleButtonLocked", false);
+		},
+
+
+		scrollTo: function() {
+			if (this.isFinished()) return;
+
+			var descendant = this.getCurrentDescendant();
+			
+            if (descendant.get("_strickle")._autoScroll === false) return;
+
+            var scrollTo = descendant.get("_strickle")._scrollTo;
+            var duration = descendant.get("_strickle")._duration || 500;
+
+            if (scrollTo === undefined) scrollTo = "@component +1";
+            if (scrollTo.substr(0,1) == "@") {
+
+            	var descendantType = StructureType.fromString(descendant.get("_type"));
+            	var typeCount = {};
+                for (var i = descendantType._level - 1, l = 0; i > l; i--) {
+                    typeCount[StructureType.fromInt(i)._id] = -1;
+                }
+
+
+                var type = scrollTo.substr(0, _.indexOf(scrollTo, " "));
+                var by = parseInt(scrollTo.substr(type.length));
+                type = type.substr(1);
+
+                var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
+                for (var i = currentIndex +1, l = flatPageDescendantsJSON.length; i < l; i++) {
+                    var item = flatPageDescendantsJSON[i];
+                    if (!typeCount[item._type]) typeCount[item._type] = 0;
+                    typeCount[item._type]++;
+                    if (typeCount[type] >= by) {
+                        return this.navigateToElement("." + item._id, duration);
+                    }
+                }
+
+            } else if (scrollTo.substr(0,1) == ".") {
+                this.navigateToElement(scrollTo, duration);
+            } else {
+                this.navigateToElement("." + scrollTo, duration);
+            }
+
+
+        },
+
+        navigateToElement: function(to, duration) {
+            _.defer(function() {
+                Adapt.navigateToElement(to, {
+                    duration: duration,
+                    offset: {
+                        top: -$('.navigation').height()
+                    }
+                }, false);
+                $(to).a11y_focus();
+            });
+        }
+		
+	});
+	
+	var strickle = new STrickle({
+		model: new Backbone.Model({})
+	});
+
+	var resizeCallback = _.bind(strickle.onWrapperResize, strickle);
+	$("#wrapper").on('resize', resizeCallback );
 
 	return strickle;
 

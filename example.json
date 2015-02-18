@@ -4,46 +4,67 @@
 * Maintainers - Oliver Foster <oliver.foster@kineo.com>
 */
 
-// To go in the contentObject.json file
+// To go in the article.json/block.json file
 //enables trickle on the page
+
+//TRICKLE STYLE BUTTON
 "_strickle": {
-    "_isEnabled": true,
-    "_autoScroll": true,
-    "_bottomPadding": 20,
-    "_animateSpeed": 1000,
-    "_isDefaultOn": true
-},
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "trickle",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
 
-
-//To got in the component.json file
-//skips trickle on the component
-
+//INLINE BUTTON, USE AS SCROLL TOO ON SUBSEQUENT CLICKS
 "_strickle": {
-    "_isEnabled": false,
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "inline-jump",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
+
+//INLINE BUTTON DISABLED ON CLICK
+"_strickle": {
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "inline-disable",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
+
+//INLINE BUTTON HIDDEN ON CLICK
+"_strickle": {
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "inline-hide",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
     "_autoScroll": true
 }
 
 
-//To go in component.json file if you need a trickle style button
-//see https://github.com/cgkineo/adapt-pageMenuRouter for help on _scrollTo
-{
-    "_id":"c-20",
-    "_parentId":"b-15",
-    "_type":"component",
-    "_component":"strickle-button",
-    "_classes":"",
-    "_layout":"full",
-    "title":"",
-    "displayTitle":"Continue button ",
-    "body":"Continue button",
-    "instruction":"",
-    "_pageLevelProgress": {
-        "_isEnabled": true
-    },
-    "_strickle": {
-        "_isEnabled": true,
-        "_scrollTo": "@component +1",
-    	"_fixedBottomButton": true,
-        "_showArticlePadding": false
-    }
-},
+//NO BUTTON
+"_strickle": {
+    "_isEnabled":true,
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
+
+
+_scrollTo Examples:
+
+"@block +2" > scroll to current block + 1
+"@article +2" > scroll to current article + 2
+".b-25" > scroll to block b-25
+"b-25" > scroll to block b-25
+
+
+
+
+

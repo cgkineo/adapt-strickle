@@ -25,6 +25,11 @@ define([
             ComponentView.prototype.initialize.apply(this);
             this.model.set("_isLocked", false);
             this.model.set("_isEnabled", false);
+            switch (this.model.get("_strickle")._buttonType) {
+            case "trickle":
+                this.model.set("_isVisible", false, { pluginName: "blank" });
+                break;
+            }
             this.listenTo(this.model, "change:_isEnabled", this.onEnabledChange);
         },
 

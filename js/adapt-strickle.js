@@ -106,7 +106,7 @@ define([
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
-			if (pageDescendantIds.indexOf( descendantId ) == -1) return false;
+			if (_.indexOf(pageDescendantIds, descendantId ) == -1) return false;
 
 
 			var descendantConfig = this.getDescendantConfig(descendantModel);
@@ -125,7 +125,7 @@ define([
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
-			var index = pageDescendantIds.indexOf( descendantId );
+			var index = _.indexOf(pageDescendantIds, descendantId );
 			return index;
 		},
 
@@ -174,7 +174,7 @@ define([
 
 			var flatPageDescendantsParentFirstJSON = this.model.get("_flatPageDescendantsParentFirstJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsParentFirstJSON, "_id");
-			var currentParentFirstIndex = pageDescendantIds.indexOf(currentDescendantId);
+			var currentParentFirstIndex = _.indexOf(pageDescendantIds, currentDescendantId);
 
 			var jquerySelector;
 			var elementIdsAfterCurrent = [];

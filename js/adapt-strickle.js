@@ -13,6 +13,7 @@ define([
 	], function(require, StructureType, STrickleButton, utils) {
 
 	var Adapt = require('coreJS/adapt');
+	var AdaptModel = require('coreModels/adaptModel');
 	var Backbone = require('backbone');
 
 	var defaultConfig = {
@@ -106,7 +107,7 @@ define([
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
-			if (_.indexOf(pageDescendantIds, descendantId ) == -1) return false;
+			if (_.indexOf( pageDescendantIds, descendantId ) == -1) return false;
 
 
 			var descendantConfig = this.getDescendantConfig(descendantModel);
@@ -125,7 +126,7 @@ define([
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
-			var index = _.indexOf(pageDescendantIds, descendantId );
+			var index = _.indexOf( pageDescendantIds, descendantId );
 			return index;
 		},
 
@@ -237,7 +238,7 @@ define([
 
 			var index = this.getDescendantIndex(descendantModel);
 
-			var buttonModel = new Backbone.Model({
+			var buttonModel = new AdaptModel({
 				_id: "strickle-button",
 				_type: "component",
 				_parentType: descendantModel.get("_type"),

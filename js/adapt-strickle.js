@@ -291,7 +291,7 @@ define([
 				if (this.model.get("_isStrickleButtonLocked")) return;
 				
 				this.initializeStep();
-
+				Adapt.trigger('device:resize');
 				if (!descendantStrickleConfig._buttonView) {
 					this.scrollTo();
 				}

@@ -66,13 +66,15 @@ define([
 			this.model.set("_flatPageDescendantsParentFirst", flatPageDescendantsParentFirst);
 			this.model.set("_currentIndex", 0);
 			this.model.set("_isFinished", false);
-			this.model.set("_isTutorClosed", false);
+			this.model.set("_isTutorOpen", false);
+			this.model.set("_wasTutorShown", false);
 			this.model.set("_isStrickleButtonLocked", false);
 
 		},
 
 		initializeStep: function() {
 			if (this.isFinished()) return;
+			this.model.set("_wasTutorShown", false);
 
 			var currentIndex = this.model.get("_currentIndex");
 			var flatPageDescendants = this.model.get("_flatPageDescendants");
@@ -276,6 +278,9 @@ define([
 			if (descendant.get("_id") == descendantModel.get("_id")) {
 				var descendantStrickleConfig = descendant.get("_strickle");
 
+				if (descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
+				if (!descendantModel.get("_isComplete")) return;
+
 				if (descendantStrickleConfig._buttonView) {
 					if (!descendantStrickleConfig._buttonView.model.get("_isComplete")) {
 						descendantStrickleConfig._buttonView.model.set("_isVisible", true, {pluginName: "blank"} );
@@ -284,9 +289,7 @@ define([
 						return;
 					}
 				}
-					
-
-				if (!descendantModel.get("_isComplete")) return;
+				
 				if (this.model.get("_isTutorOpen")) return;
 				if (this.model.get("_isStrickleButtonLocked")) return;
 				
@@ -303,6 +306,7 @@ define([
 		},
 
 		onTutorClosed: function() {
+			this.model.set("_wasTutorShown", true);
 			this.model.set("_isTutorOpen", false);
 
 			if (this.isFinished()) return;

@@ -102,7 +102,6 @@ define([
 			if (!descendantModel.get("_strickle")) return false;
 			if (descendantModel.get("_isSubmitted" === true)) return false;
 			if (descendantModel.get("_isSubmitted" === false)) return true;
-			if (descendantModel.get("_isInteractionsComplete") === false) return true;
 			if (descendantModel.get("_isInteractionComplete") === false) return true;
 			if (descendantModel.get("_isComplete")) return false;
 

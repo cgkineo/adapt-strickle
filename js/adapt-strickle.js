@@ -33,6 +33,7 @@ define([
 		},
 
 		setupEventListeners: function() {
+			this.listenTo(Adapt, "menuView:preRender", this.onMenuInitialize);
 			this.listenTo(Adapt, "pageView:preRender", this.onPageInitialize);
 			this.listenTo(Adapt, "pageView:ready", this.onPageReady);
 			this.listenTo(Adapt, "tutor:opened", this.onTutorOpened);
@@ -43,6 +44,10 @@ define([
 			this.listenTo(Adapt.components, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
 			this.listenTo(Adapt.blocks, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
 			this.listenTo(Adapt.articles, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
+		},
+
+		onMenuInitialize: function(view) {
+			this.removeStrickle();
 		},
 
 		onPageInitialize: function(view) {
@@ -92,9 +97,13 @@ define([
 
 				return;
 			}
+			this.removeStrickle();
+		},
 
+		removeStrickle: function() {
 			this.model.set("_currentIndex", -1);
 			this.model.set("_isFinished", true);
+			$("body").css("height", "");
 			$("html").removeClass("strickle");
 		},
 

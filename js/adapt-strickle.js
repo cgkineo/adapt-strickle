@@ -294,7 +294,7 @@ define([
 					if (!descendantStrickleConfig._buttonView) return;
 					descendantStrickleConfig._isComplete = descendantStrickleConfig._buttonView.model.get("_isComplete");
 				} else {
-					if (descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
+					if ( descendantModel.get("_type") === "component" &&  descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
 					if (!descendantModel.get("_isComplete")) return;
 
 					if (descendantStrickleConfig._buttonView) {
@@ -381,6 +381,10 @@ define([
                     if (!typeCount[item._type]) typeCount[item._type] = 0;
                     typeCount[item._type]++;
                     if (typeCount[type] >= by) {
+                    	if (!$("."+item._id).is(":visible")) {
+                            by++;
+                            continue;
+                        }
                         return this.navigateToElement("." + item._id, duration);
                     }
                 }

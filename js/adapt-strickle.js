@@ -33,6 +33,7 @@ define([
 		},
 
 		setupEventListeners: function() {
+			this.listenTo(Adapt, "menuView:preRender", this.onMenuInitialize);
 			this.listenTo(Adapt, "pageView:preRender", this.onPageInitialize);
 			this.listenTo(Adapt, "pageView:ready", this.onPageReady);
 			this.listenTo(Adapt, "tutor:opened", this.onTutorOpened);
@@ -43,6 +44,10 @@ define([
 			this.listenTo(Adapt.components, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
 			this.listenTo(Adapt.blocks, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
 			this.listenTo(Adapt.articles, "change:_isComplete change:_isInteractionsComplete change:_isInteractionComplete", this.onComplete);
+		},
+
+		onMenuInitialize: function(view) {
+			this.removeStrickle();
 		},
 
 		onPageInitialize: function(view) {
@@ -66,13 +71,15 @@ define([
 			this.model.set("_flatPageDescendantsParentFirst", flatPageDescendantsParentFirst);
 			this.model.set("_currentIndex", 0);
 			this.model.set("_isFinished", false);
-			this.model.set("_isTutorClosed", false);
+			this.model.set("_isTutorOpen", false);
+			this.model.set("_wasTutorShown", false);
 			this.model.set("_isStrickleButtonLocked", false);
 
 		},
 
 		initializeStep: function() {
 			if (this.isFinished()) return;
+			this.model.set("_wasTutorShown", false);
 
 			var currentIndex = this.model.get("_currentIndex");
 			var flatPageDescendants = this.model.get("_flatPageDescendants");
@@ -90,9 +97,13 @@ define([
 
 				return;
 			}
+			this.removeStrickle();
+		},
 
+		removeStrickle: function() {
 			this.model.set("_currentIndex", -1);
 			this.model.set("_isFinished", true);
+			$("body").css("height", "");
 			$("html").removeClass("strickle");
 		},
 
@@ -100,7 +111,6 @@ define([
 			if (!descendantModel.get("_strickle")) return false;
 			if (descendantModel.get("_isSubmitted" === true)) return false;
 			if (descendantModel.get("_isSubmitted" === false)) return true;
-			if (descendantModel.get("_isInteractionsComplete") === false) return true;
 			if (descendantModel.get("_isInteractionComplete") === false) return true;
 			if (descendantModel.get("_isComplete")) return false;
 
@@ -276,6 +286,9 @@ define([
 			if (descendant.get("_id") == descendantModel.get("_id")) {
 				var descendantStrickleConfig = descendant.get("_strickle");
 
+				if (descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
+				if (!descendantModel.get("_isComplete")) return;
+
 				if (descendantStrickleConfig._buttonView) {
 					if (!descendantStrickleConfig._buttonView.model.get("_isComplete")) {
 						descendantStrickleConfig._buttonView.model.set("_isVisible", true, {pluginName: "blank"} );
@@ -284,9 +297,7 @@ define([
 						return;
 					}
 				}
-					
-
-				if (!descendantModel.get("_isComplete")) return;
+				
 				if (this.model.get("_isTutorOpen")) return;
 				if (this.model.get("_isStrickleButtonLocked")) return;
 				
@@ -303,6 +314,7 @@ define([
 		},
 
 		onTutorClosed: function() {
+			this.model.set("_wasTutorShown", true);
 			this.model.set("_isTutorOpen", false);
 
 			if (this.isFinished()) return;

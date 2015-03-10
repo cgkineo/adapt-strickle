@@ -86,7 +86,7 @@ define([
 			for (var i = currentIndex, l = flatPageDescendants.length; i < l; i++) {
 				var descendant = flatPageDescendants[i];
 
-				if (!this.isDescendantStrickled(descendant)) continue;
+				if (!this.isDescendantStrickled(descendant, true)) continue;
 
 				this.model.set("_currentIndex", i);
 				this.model.set("_tutorClosed", false);
@@ -107,7 +107,7 @@ define([
 			$("html").removeClass("strickle");
 		},
 
-		isDescendantStrickled: function(descendantModel) {
+		isDescendantStrickled: function(descendantModel, ignoreNonStepLocked) {
 			if (!descendantModel.get("_strickle")) return false;
 			if (descendantModel.get("_isSubmitted" === true)) return false;
 			if (descendantModel.get("_isSubmitted" === false)) return true;
@@ -122,6 +122,7 @@ define([
 
 			var descendantConfig = this.getDescendantConfig(descendantModel);
 			if (descendantConfig._isEnabled === false) return false;
+			if (ignoreNonStepLocked && descendantConfig._buttonType == "jump") return false;
 
 			return true;
 		},

@@ -22,6 +22,7 @@ define([
 
         initialize: function() {
             this.$el.addClass("no-state");
+            this.$el.addClass(this.model.get("_strickle")._componentClasses);
             ComponentView.prototype.initialize.apply(this);
             this.model.set("_isLocked", false);
             this.model.set("_isEnabled", false);
@@ -34,7 +35,14 @@ define([
         },
 
         postRender: function() {
-            this.toggleDisabled(false);
+            switch (this.model.get("_strickle")._buttonType) {
+            case "jump": 
+                this.model.set("_isLocked", false);
+                this.model.set("_isEnabled", true);
+                break;
+            default:
+                this.toggleDisabled(false);
+            }
             
             this.setReadyStatus();
             this.setupEventListeners();
@@ -55,7 +63,7 @@ define([
 
         completeJump: function() {
             switch (this.model.get("_strickle")._buttonType) {
-            case "inline-jump":
+            case "inline-jump": case "jump":
                 this.scrollTo();
                 break;
             }
@@ -72,7 +80,7 @@ define([
                 this.model.set("_isVisible", false, { pluginName: "blank" });
                 this.stopListening();
                 break;
-            case "inline-jump":
+            case "inline-jump": case "jump":
                 this.model.set("_isEnabled", true);
                 break;
             case "inline-disable":
@@ -168,7 +176,7 @@ define([
                         top: -$('.navigation').height()
                     }
                 }, false);
-                $(to).a11y_focus();
+                if ($.fn.a11y_focus) $(to).a11y_focus();
             });
         }
 

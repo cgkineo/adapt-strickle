@@ -17,11 +17,21 @@
     "_autoScroll": true
 }
 
-//INLINE BUTTON, USE AS SCROLL TOO ON SUBSEQUENT CLICKS
+//INLINE BUTTON, USE AS SCROLL TO ON SUBSEQUENT CLICKS
 "_strickle": {
     "_isEnabled":true,
     "button": "Continue to next section.",
     "_buttonType": "inline-jump",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
+
+//INLINE BUTTON, USE AS SCROLL TO ALWAYS (NO STEP LOCKING)
+"_strickle": {
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "jump",
     "_scrollTo": "@block +1",
     "_duration": 500,
     "_autoScroll": true

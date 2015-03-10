@@ -164,6 +164,10 @@ define([
                     if (!typeCount[item._type]) typeCount[item._type] = 0;
                     typeCount[item._type]++;
                     if (typeCount[type] >= by) {
+                        if (!$("."+item._id).is(":visible")) {
+                            by++;
+                            continue;
+                        }
                         return this.navigateToElement("." + item._id, duration);
                     }
                 }

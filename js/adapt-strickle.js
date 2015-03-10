@@ -288,7 +288,8 @@ define([
 
 			if (descendant.get("_id") == descendantModel.get("_id")) {
 				var descendantStrickleConfig = descendant.get("_strickle");
-
+				if (!descendantStrickleConfig) return;
+				
 				if (descendantStrickleConfig._buttonType == "jump-lock") {
 					if (!descendantStrickleConfig._buttonView) return;
 					descendantStrickleConfig._isComplete = descendantStrickleConfig._buttonView.model.get("_isComplete");

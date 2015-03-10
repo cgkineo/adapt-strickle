@@ -86,7 +86,7 @@ define([
 			for (var i = currentIndex, l = flatPageDescendants.length; i < l; i++) {
 				var descendant = flatPageDescendants[i];
 
-				if (!this.isDescendantStrickled(descendant, true)) continue;
+				if (!this.isDescendantStepLocking(descendant, true)) continue;
 
 				this.model.set("_currentIndex", i);
 				this.model.set("_tutorClosed", false);
@@ -107,7 +107,7 @@ define([
 			$("html").removeClass("strickle");
 		},
 
-		isDescendantStrickled: function(descendantModel, ignoreNonStepLocked) {
+		isDescendantStepLocking: function(descendantModel, ignoreNonStepLocked) {
 			if (!descendantModel.get("_strickle")) return false;
 			if (descendantModel.get("_strickle")._buttonType !== "jump-lock") {
 				if (descendantModel.get("_isSubmitted" === true)) return false;
@@ -125,6 +125,30 @@ define([
 			if (descendantConfig._isEnabled === false) return false;
 			if (ignoreNonStepLocked && descendantConfig._buttonType == "jump") return false;
 			if (descendantConfig._isComplete && descendantConfig._buttonType == "jump-lock") return false;
+
+			return true;
+		},
+
+		shouldRenderButton: function(descendantModel, ignoreNonStepLocked) {
+			if (!descendantModel.get("_strickle")) return false;
+
+			switch (descendantModel.get("_strickle")._buttonType) {
+			case "jump-lock": case "jump": case "inline-jump":
+					return true;
+			}
+
+			if (descendantModel.get("_isSubmitted" === true)) return false;
+			if (descendantModel.get("_isSubmitted" === false)) return true;
+			if (descendantModel.get("_isInteractionComplete") === false) return true;
+			if (descendantModel.get("_isComplete")) return false;
+
+			var descendantId = descendantModel.get("_id");
+			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
+			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
+			if (_.indexOf( pageDescendantIds, descendantId ) == -1) return false;
+
+			var descendantConfig = this.getDescendantConfig(descendantModel);
+			if (descendantConfig._isEnabled === false) return false;
 
 			return true;
 		},
@@ -231,7 +255,7 @@ define([
 			
 			if (descendant.get("_component") === "strickle-button") return;
 
-			if (!this.isDescendantStrickled(descendant)) return;
+			if (!this.shouldRenderButton(descendant)) return;
 			
 			this.setupSectionButton(descendant);
 		},

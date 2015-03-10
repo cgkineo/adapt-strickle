@@ -67,6 +67,13 @@
 }
 
 
+//ADDITIONAL MODIFICATIONS
+"_strickle": {
+    "_componentClasses": "class1 class2",
+    "_buttonClasses": "class3 class4"
+}
+
+
 _scrollTo Examples:
 
 "@block +2" > scroll to current block + 1

@@ -109,20 +109,22 @@ define([
 
 		isDescendantStrickled: function(descendantModel, ignoreNonStepLocked) {
 			if (!descendantModel.get("_strickle")) return false;
-			if (descendantModel.get("_isSubmitted" === true)) return false;
-			if (descendantModel.get("_isSubmitted" === false)) return true;
-			if (descendantModel.get("_isInteractionComplete") === false) return true;
-			if (descendantModel.get("_isComplete")) return false;
+			if (descendantModel.get("_strickle")._buttonType !== "jump-lock") {
+				if (descendantModel.get("_isSubmitted" === true)) return false;
+				if (descendantModel.get("_isSubmitted" === false)) return true;
+				if (descendantModel.get("_isInteractionComplete") === false) return true;
+				if (descendantModel.get("_isComplete")) return false;
+			}
 
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
 			if (_.indexOf( pageDescendantIds, descendantId ) == -1) return false;
 
-
 			var descendantConfig = this.getDescendantConfig(descendantModel);
 			if (descendantConfig._isEnabled === false) return false;
 			if (ignoreNonStepLocked && descendantConfig._buttonType == "jump") return false;
+			if (descendantConfig._isComplete && descendantConfig._buttonType == "jump-lock") return false;
 
 			return true;
 		},
@@ -287,20 +289,25 @@ define([
 			if (descendant.get("_id") == descendantModel.get("_id")) {
 				var descendantStrickleConfig = descendant.get("_strickle");
 
-				if (descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
-				if (!descendantModel.get("_isComplete")) return;
+				if (descendantStrickleConfig._buttonType == "jump-lock") {
+					if (!descendantStrickleConfig._buttonView) return;
+					descendantStrickleConfig._isComplete = descendantStrickleConfig._buttonView.model.get("_isComplete");
+				} else {
+					if (descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
+					if (!descendantModel.get("_isComplete")) return;
 
-				if (descendantStrickleConfig._buttonView) {
-					if (!descendantStrickleConfig._buttonView.model.get("_isComplete")) {
-						descendantStrickleConfig._buttonView.model.set("_isVisible", true, {pluginName: "blank"} );
-						descendantStrickleConfig._buttonView.model.set("_isLocked", true);
-						descendantStrickleConfig._buttonView.model.set("_isEnabled", true);
-						return;
+					if (descendantStrickleConfig._buttonView) {
+						if (!descendantStrickleConfig._buttonView.model.get("_isComplete")) {
+							descendantStrickleConfig._buttonView.model.set("_isVisible", true, {pluginName: "blank"} );
+							descendantStrickleConfig._buttonView.model.set("_isLocked", true);
+							descendantStrickleConfig._buttonView.model.set("_isEnabled", true);
+							return;
+						}
 					}
+					
+					if (this.model.get("_isTutorOpen")) return;
+					if (this.model.get("_isStrickleButtonLocked")) return;
 				}
-				
-				if (this.model.get("_isTutorOpen")) return;
-				if (this.model.get("_isStrickleButtonLocked")) return;
 				
 				this.initializeStep();
 				Adapt.trigger('device:resize');

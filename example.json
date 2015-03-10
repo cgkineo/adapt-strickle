@@ -17,7 +17,7 @@
     "_autoScroll": true
 }
 
-//INLINE BUTTON, USE AS SCROLL TO ON SUBSEQUENT CLICKS
+//INLINE BUTTON, USE AS SCROLL TO ON SUBSEQUENT CLICKS (STEP LOCKING AND REQUIRED COMPLETION)
 "_strickle": {
     "_isEnabled":true,
     "button": "Continue to next section.",
@@ -27,7 +27,7 @@
     "_autoScroll": true
 }
 
-//INLINE BUTTON, USE AS SCROLL TO ALWAYS (NO STEP LOCKING)
+//INLINE BUTTON, USE AS SCROLL TO ALWAYS (NOT STEP LOCKED AND NO COMPLETION REQUIRED)
 "_strickle": {
     "_isEnabled":true,
     "button": "Continue to next section.",
@@ -37,7 +37,17 @@
     "_autoScroll": true
 }
 
-//INLINE BUTTON DISABLED ON CLICK
+//INLINE BUTTON, ALWAYS SCROLL TO ALWAYS (STEP LOCKING, NO COMPLETION REQUIRED)
+"_strickle": {
+    "_isEnabled":true,
+    "button": "Continue to next section.",
+    "_buttonType": "jump-lock",
+    "_scrollTo": "@block +1",
+    "_duration": 500,
+    "_autoScroll": true
+}
+
+//INLINE BUTTON DISABLED ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
 "_strickle": {
     "_isEnabled":true,
     "button": "Continue to next section.",
@@ -47,7 +57,7 @@
     "_autoScroll": true
 }
 
-//INLINE BUTTON HIDDEN ON CLICK
+//INLINE BUTTON HIDDEN ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
 "_strickle": {
     "_isEnabled":true,
     "button": "Continue to next section.",
@@ -58,7 +68,7 @@
 }
 
 
-//NO BUTTON
+//NO BUTTON  (STEP LOCKING AND REQUIRED COMPLETION)
 "_strickle": {
     "_isEnabled":true,
     "_scrollTo": "@block +1",

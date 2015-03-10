@@ -22,7 +22,8 @@ define([
 
         initialize: function() {
             this.$el.addClass("no-state");
-            this.$el.addClass(this.model.get("_strickle")._componentClasses);
+            if (this.model.get("_strickle")._componentClasses)
+                this.$el.addClass(this.model.get("_strickle")._componentClasses);
             ComponentView.prototype.initialize.apply(this);
             this.model.set("_isLocked", false);
             this.model.set("_isEnabled", false);
@@ -36,8 +37,11 @@ define([
 
         postRender: function() {
             switch (this.model.get("_strickle")._buttonType) {
-            case "jump": 
+            case "jump":
                 this.model.set("_isLocked", false);
+                this.model.set("_isEnabled", true);
+                break;
+            case "jump-lock":
                 this.model.set("_isEnabled", true);
                 break;
             default:
@@ -63,7 +67,7 @@ define([
 
         completeJump: function() {
             switch (this.model.get("_strickle")._buttonType) {
-            case "inline-jump": case "jump":
+            case "inline-jump": case "jump": case "jump-lock":
                 this.scrollTo();
                 break;
             }
@@ -71,6 +75,8 @@ define([
 
         completeLock: function() {
             this.toggleLock(false);
+
+            this.model.get("_strickle")._isComplete = true
 
             this.setCompletionStatus();
 
@@ -80,7 +86,7 @@ define([
                 this.model.set("_isVisible", false, { pluginName: "blank" });
                 this.stopListening();
                 break;
-            case "inline-jump": case "jump":
+            case "inline-jump": case "jump": case  "jump-lock":
                 this.model.set("_isEnabled", true);
                 break;
             case "inline-disable":
@@ -93,6 +99,7 @@ define([
                 this.stopListening();
                 break;
             }
+
             this.scrollTo();
         },
 

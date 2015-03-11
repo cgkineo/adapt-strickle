@@ -42,10 +42,16 @@ define([
                 this.model.set("_isEnabled", true);
                 break;
             case "jump-lock":
+                this.model.set("_isLocked", true);
                 this.model.set("_isEnabled", true);
                 break;
+            case "inline-disable":
+                var _isComplete = this.model.get("_isComplete");
+                this.toggleDisabled(!_isComplete);
+                break;
             default:
-                this.toggleDisabled(false);
+                var _isComplete = this.model.get("_isComplete");
+                this.toggleDisabled(_isComplete);
             }
             
             this.setReadyStatus();
@@ -76,7 +82,7 @@ define([
         completeLock: function() {
             this.toggleLock(false);
 
-            this.model.get("_strickle")._isComplete = true
+            this.model.get("_strickle")._isInteractionComplete = true;
 
             this.setCompletionStatus();
 
@@ -128,6 +134,9 @@ define([
 
         toggleLock: function(bool) {
             if (this.model.get("_isLocked") === bool) return;
+            switch(this.model.get("_strickle")._buttonType) {
+            case "jump-lock": bool = true;
+            }
             if (bool) {
                 this.$el.find('.component-inner').addClass("locked");
                 this.model.set("_isLocked", true);

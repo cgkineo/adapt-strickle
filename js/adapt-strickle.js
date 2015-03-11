@@ -86,7 +86,7 @@ define([
 			for (var i = currentIndex, l = flatPageDescendants.length; i < l; i++) {
 				var descendant = flatPageDescendants[i];
 
-				if (!this.isDescendantStepLocking(descendant, true)) continue;
+				if (!this.isDescendantStepLocking(descendant)) continue;
 
 				this.model.set("_currentIndex", i);
 				this.model.set("_tutorClosed", false);
@@ -107,41 +107,58 @@ define([
 			$("html").removeClass("strickle");
 		},
 
-		isDescendantStepLocking: function(descendantModel, ignoreNonStepLocked) {
+		isDescendantStepLocking: function(descendantModel) {
 			if (!descendantModel.get("_strickle")) return false;
+			
 			if (descendantModel.get("_strickle")._buttonType !== "jump-lock") {
-				if (descendantModel.get("_isSubmitted" === true)) return false;
-				if (descendantModel.get("_isSubmitted" === false)) return true;
-				if (descendantModel.get("_isInteractionComplete") === false) return true;
-				if (descendantModel.get("_isComplete")) return false;
+				
+				var isDescendantComplete = this.isDescendantComplete(descendantModel);
+				if (isDescendantComplete !== undefined) return !isDescendantComplete;
+
 			}
 
-			var descendantId = descendantModel.get("_id");
-			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
-			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
-			if (_.indexOf( pageDescendantIds, descendantId ) == -1) return false;
+			var isDescendantConfigured = this.isDescendantConfigured(descendantModel);
+			if (isDescendantConfigured === false) return false;
 
-			var descendantConfig = this.getDescendantConfig(descendantModel);
-			if (descendantConfig._isEnabled === false) return false;
-			if (ignoreNonStepLocked && descendantConfig._buttonType == "jump") return false;
-			if (descendantConfig._isComplete && descendantConfig._buttonType == "jump-lock") return false;
+
+			var isJumpButtonStepLocked = this.isJumpButtonStepLocked(descendantModel);
+			if (isJumpButtonStepLocked !== undefined) return false;
 
 			return true;
 		},
 
-		shouldRenderButton: function(descendantModel, ignoreNonStepLocked) {
+		shouldRenderButton: function(descendantModel) {
 			if (!descendantModel.get("_strickle")) return false;
 
 			switch (descendantModel.get("_strickle")._buttonType) {
-			case "jump-lock": case "jump": case "inline-jump":
-					return true;
+			case "jump-lock": case "jump": case "inline-jump": case "inline-disable":
+				return true;
 			}
 
-			if (descendantModel.get("_isSubmitted" === true)) return false;
-			if (descendantModel.get("_isSubmitted" === false)) return true;
-			if (descendantModel.get("_isInteractionComplete") === false) return true;
-			if (descendantModel.get("_isComplete")) return false;
+			var isDescendantComplete = this.isDescendantComplete(descendantModel);
+			if (isDescendantComplete !== undefined) return !isDescendantComplete;
 
+			var isDescendantConfigured = this.isDescendantConfigured(descendantModel);
+			if (isDescendantConfigured === false) return false;
+
+			return true;
+		},
+
+		isJumpButtonStepLocked: function(descendantModel) {
+			var descendantConfig = this.getDescendantConfig(descendantModel);
+
+			if (descendantConfig._buttonType == "jump") return false;
+			if (descendantConfig._isInteractionComplete && descendantConfig._buttonType == "jump-lock") return false;
+		},
+
+		isDescendantComplete: function(descendantModel) {
+			if (descendantModel.get("_isSubmitted") === true) return true;
+			if (descendantModel.get("_isInteractionComplete") === false) return false;
+			if (descendantModel.get("_isComplete")) return true;
+			if (descendantModel.get("_isSubmitted") === false) return false;
+		},
+
+		isDescendantConfigured: function(descendantModel) {
 			var descendantId = descendantModel.get("_id");
 			var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
 			var pageDescendantIds = _.pluck(flatPageDescendantsJSON, "_id");
@@ -149,8 +166,6 @@ define([
 
 			var descendantConfig = this.getDescendantConfig(descendantModel);
 			if (descendantConfig._isEnabled === false) return false;
-
-			return true;
 		},
 
 		getDescendantConfig: function(descendantModel) {
@@ -261,9 +276,13 @@ define([
 		},
 
 		setupSectionButton: function(descendantModel) {
-			var descendantConfig = this.getDescendantConfig(descendantModel);
-			if (descendantConfig.button === undefined) return;
 
+			var _isComplete = !this.isLockedOnRevisit(descendantModel);
+
+			var descendantStrickleConfig = descendantModel.get("_strickle");
+			if (descendantStrickleConfig.button === undefined) return;		
+
+			var descendantConfig = this.getDescendantConfig(descendantModel);
 			var descendantId = descendantModel.get("_id");
 			var descendantElement = $("." + descendantId);
 
@@ -287,7 +306,7 @@ define([
 				_isVisible: (descendantConfig._buttonType == "fixed-bottom") ? false : true,
 				_isAvailable: true,
 				_isEnabled: true,
-				_isComplete: descendantModel.get("_isComplete"),
+				_isComplete: _isComplete,
 				_flatPageDescendantsJSON: this.model.get("_flatPageDescendantsJSON"),
 				_index: index
 			});
@@ -299,6 +318,23 @@ define([
 
 			this.listenToOnce(buttonModel, "change:_isComplete", this.onStrickleButtonComplete);
 
+		},
+
+		isLockedOnRevisit: function(descendantModel) {
+			var _isComplete = descendantModel.get("_isComplete");
+			var _isLocked = !_isComplete;
+
+			var descendantStrickleConfig = descendantModel.get("_strickle");
+			if (descendantStrickleConfig._isLockedOnRevisit === true) {
+				//ALWAYS LOCK ON REVISIT
+				_isLocked = true;
+				descendantStrickleConfig._isInteractionComplete = false
+			} else {
+				//ONLY LOCK IF SECTION NOT COMPLETE
+				descendantStrickleConfig._isInteractionComplete = _isComplete;
+			}
+
+			return _isLocked;
 		},
 
 		onComplete: function(model) {
@@ -316,7 +352,7 @@ define([
 				
 				if (descendantStrickleConfig._buttonType == "jump-lock") {
 					if (!descendantStrickleConfig._buttonView) return;
-					descendantStrickleConfig._isComplete = descendantStrickleConfig._buttonView.model.get("_isComplete");
+					descendantStrickleConfig._isInteractionComplete = descendantStrickleConfig._buttonView.model.get("_isComplete");
 				} else {
 					if ( descendantModel.get("_type") === "component" &&  descendantModel.get("_canShowFeedback") && !this.model.get("_wasTutorShown")) return;
 					if (!descendantModel.get("_isComplete")) return;
@@ -387,18 +423,24 @@ define([
 
             if (scrollTo === undefined) scrollTo = "@component +1";
             if (scrollTo.substr(0,1) == "@") {
+            	//NAVIGATE BY OFFSET
 
             	var descendantType = StructureType.fromString(descendant.get("_type"));
+
+            	//CREATE HASH FOR OFFSET OF PARENTS ACCORDING TO DESCENDANT TYPE
             	var typeCount = {};
                 for (var i = descendantType._level - 1, l = 0; i > l; i--) {
                     typeCount[StructureType.fromInt(i)._id] = -1;
                 }
 
-
+                //SPLIT SCROLLTO TEXT INTO @TYPE +BY
                 var type = scrollTo.substr(0, _.indexOf(scrollTo, " "));
                 var by = parseInt(scrollTo.substr(type.length));
                 type = type.substr(1);
 
+                //GO THROUGH DESCENDANTS FROM CURRENT INDEX
+                //USING THE OFFSET HASH FOR BEARING CORRECTIONS
+                //IF THE ITEM IS AT CORRECT OFFSET ACCORDING TO +BY AND @TYPE THEN NAVIGATE TO IT
                 var flatPageDescendantsJSON = this.model.get("_flatPageDescendantsJSON");
                 for (var i = currentIndex +1, l = flatPageDescendantsJSON.length; i < l; i++) {
                     var item = flatPageDescendantsJSON[i];
@@ -406,6 +448,7 @@ define([
                     typeCount[item._type]++;
                     if (typeCount[type] >= by) {
                     	if (!$("."+item._id).is(":visible")) {
+                    		//IGNORE VISIBLY HIDDEN ELEMENTS
                             by++;
                             continue;
                         }
@@ -414,8 +457,10 @@ define([
                 }
 
             } else if (scrollTo.substr(0,1) == ".") {
+            	//NAVIGATE BY CLASS
                 this.navigateToElement(scrollTo, duration);
             } else {
+            	//NAVIGATE BY ID
                 this.navigateToElement("." + scrollTo, duration);
             }
 
@@ -430,7 +475,7 @@ define([
                         top: -$('.navigation').height()
                     }
                 }, false);
-                $(to).a11y_focus();
+                if ($.fn.a11y_focus) $(to).a11y_focus();
             });
         }
 		

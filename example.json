@@ -14,7 +14,8 @@
     "_buttonType": "trickle",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 //INLINE BUTTON, USE AS SCROLL TO ON SUBSEQUENT CLICKS (STEP LOCKING AND REQUIRED COMPLETION)
@@ -24,7 +25,8 @@
     "_buttonType": "inline-jump",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 //INLINE BUTTON, USE AS SCROLL TO ALWAYS (NOT STEP LOCKED AND NO COMPLETION REQUIRED)
@@ -34,7 +36,8 @@
     "_buttonType": "jump",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 //INLINE BUTTON, ALWAYS SCROLL TO ALWAYS (STEP LOCKING, NO COMPLETION REQUIRED)
@@ -44,7 +47,8 @@
     "_buttonType": "jump-lock",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 //INLINE BUTTON DISABLED ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
@@ -54,7 +58,8 @@
     "_buttonType": "inline-disable",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 //INLINE BUTTON HIDDEN ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
@@ -64,7 +69,8 @@
     "_buttonType": "inline-hide",
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 
@@ -73,7 +79,8 @@
     "_isEnabled":true,
     "_scrollTo": "@block +1",
     "_duration": 500,
-    "_autoScroll": true
+    "_autoScroll": true,
+    "_isLockedOnRevisit": false
 }
 
 

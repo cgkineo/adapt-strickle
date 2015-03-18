@@ -6,14 +6,14 @@
 
 define([
 	'require', 
+	'coreModels/adaptModel',
 	"./DataTypes/StructureType", 
 	'./strickle-button',
 	'./utils',
 	'./dom-resize-event'
-	], function(require, StructureType, STrickleButton, utils) {
+	], function(require, AdaptModel, StructureType, STrickleButton, utils) {
 
 	var Adapt = require('coreJS/adapt');
-	var AdaptModel = require('coreModels/adaptModel');
 	var Backbone = require('backbone');
 
 	var defaultConfig = {
@@ -250,8 +250,7 @@ define([
 				.find(".strickle-hidden")
 				.removeClass("strickle-hidden");
 
-			console.log("Unlocking to:")
-			console.log(currentDescendantId);
+			console.log("Unlocking to:", currentDescendantId);
 		},
 
 		onWrapperResize: function() {
@@ -423,6 +422,8 @@ define([
 
             if (scrollTo === undefined) scrollTo = "@component +1";
             if (scrollTo.substr(0,1) == "@") {
+            	var currentIndex = this.model.get("_currentIndex") - 1;
+
             	//NAVIGATE BY OFFSET
 
             	var descendantType = StructureType.fromString(descendant.get("_type"));
@@ -452,6 +453,7 @@ define([
                             by++;
                             continue;
                         }
+                        console.log("scrolling to", item._id);
                         return this.navigateToElement("." + item._id, duration);
                     }
                 }

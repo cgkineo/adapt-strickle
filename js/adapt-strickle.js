@@ -89,6 +89,7 @@ define([
 				if (!this.isDescendantStepLocking(descendant)) continue;
 
 				this.model.set("_currentIndex", i);
+				this.model.set("_previousIndex", currentIndex);
 				this.model.set("_tutorClosed", false);
 
 				this.resizeToCurrentIndex();
@@ -189,6 +190,17 @@ define([
 
 			var flatPageDescendants = this.model.get("_flatPageDescendants");
 			var descendant = flatPageDescendants[currentIndex];
+
+			return descendant;
+		},
+		
+		getPreviousDescendant: function() {
+			if (this.isFinished()) return;
+
+			var previousIndex = this.model.get("_previousIndex");
+
+			var flatPageDescendants = this.model.get("_flatPageDescendants");
+			var descendant = flatPageDescendants[previousIndex];
 
 			return descendant;
 		},
@@ -413,7 +425,7 @@ define([
 		scrollTo: function() {
 			if (this.isFinished()) return;
 
-			var descendant = this.getCurrentDescendant();
+			var descendant = this.getPreviousDescendant();
 			
             if (descendant.get("_strickle")._autoScroll === false) return;
 
@@ -422,7 +434,7 @@ define([
 
             if (scrollTo === undefined) scrollTo = "@component +1";
             if (scrollTo.substr(0,1) == "@") {
-            	var currentIndex = this.model.get("_currentIndex") - 1;
+            	var currentIndex = this.model.get("_previousIndex");
 
             	//NAVIGATE BY OFFSET
 

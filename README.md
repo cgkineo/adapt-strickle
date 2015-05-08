@@ -1,8 +1,6 @@
-adapt-strickle
+adapt-contrib-trickle
 ================
 
-Scrolling implementation of trickle.  
-  
 Reveals blocks and articles on completion.
   
 Can have:  

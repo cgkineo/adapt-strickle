@@ -10,9 +10,17 @@
 //TRICKLE STYLE BUTTON
 "_strickle": {
     "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "trickle",
-    "_scrollTo": "@block +1",
+    "_button": {
+        "_isEnabled": true  || true,
+        "_isFullWidth": true  || true,
+        "_styleAfterClick": "hidden|disabled|none" || "hidden",
+        "text": "Continue to next section." || "Continue"
+    },
+    "_stepLocking": {
+        "_isEnabled": true || true, 
+        "_requireCompletion": true || true
+    },
+    "_scrollTo": "@block +1" || "@block +1",
     "_duration": 500,
     "_autoScroll": true,
     "_isLockedOnRevisit": false

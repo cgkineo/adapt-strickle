@@ -1,0 +1,94 @@
+/*
+* adapt-trickle
+* License - http://github.com/adaptlearning/adapt_framework/LICENSE
+* Maintainers - Oliver Foster <oliver.foster@kineo.com>
+*/
+
+html.trickle {
+	height:100%;
+
+	body {
+		overflow: hidden;
+	}
+}
+
+.trickle-button-component {
+	text-align: center;
+	padding-bottom: 20px;
+	
+	&.trickle-full-width {
+		.trickle-button-inner {
+			display:none;
+			width: 100%;
+
+			&.locking {
+				position:fixed;
+				bottom:0px;
+				left:0px;
+				display:block;
+
+				button {
+					z-index: 20;
+					width:100%;
+				}
+			}
+		}
+
+	}
+
+	&.trickle-round-arrow {
+		button {
+			width: 80px;
+			height: 80px;
+			background-color: @button-color;
+			border-radius: 50%;
+			margin: 10px auto 0;
+			-webkit-transition: background-color 0.25s ease-in;
+			-moz-transition: background-color 0.25s ease-in;
+			-o-transition: background-color 0.25s ease-in;
+			transition: background-color 0.25s ease-in;
+			background-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="248px" height="204px" viewBox="0 0 248 204" enable-background="new 0 0 248 204" xml:space="preserve"><polyline fill="none" stroke="#FFFFFF" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="209.045,64.448 125.655,147.839 42.265,64.448 "/></svg>');
+			background-size: 60px;
+			background-repeat: no-repeat;
+			background-position: center;
+			border: none;
+			color: transparent !important;
+		}
+	}
+
+	&.trickle-full-width.trickle-round-arrow {
+		padding-bottom: 80px;
+
+		.trickle-button-inner {
+			display:none;
+			width: 100%;
+
+			&.locking {
+				position:fixed;
+				bottom:0px;
+				left:0px;
+				display:block;
+				
+				button {
+					z-index: 20;
+					width: 80px;
+					height: 80px;
+					background-color: @button-color;
+					border-radius: 50%;
+					margin: 10px auto 0;
+					-webkit-transition: background-color 0.25s ease-in;
+					-moz-transition: background-color 0.25s ease-in;
+					-o-transition: background-color 0.25s ease-in;
+					transition: background-color 0.25s ease-in;
+					background-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="248px" height="204px" viewBox="0 0 248 204" enable-background="new 0 0 248 204" xml:space="preserve"><polyline fill="none" stroke="#FFFFFF" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="209.045,64.448 125.655,147.839 42.265,64.448 "/></svg>');
+					background-size: 60px;
+					background-repeat: no-repeat;
+					background-position: center;
+					border: none;
+					margin-bottom: 20px;
+					color: transparent !important;
+				}
+			}
+		}
+	}
+}

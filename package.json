@@ -1,11 +1,8 @@
 {
-  "name": "adapt-strickle",
+  "name": "adapt-trickle",
   "version": "0.0.1",
   "description": "Scrolling implementation of trickle",
   "main": "",
-  "scripts": {
-    "test": "./node_modules/.bin/karma start --single-run --browsers PhantomJS"
-  },
   "repository": {
     "type": "git",
     "url": "git://github.com/cgkineo/adapt-strickle.git"
@@ -14,10 +11,5 @@
   "license": "GPL v3",
   "bugs": {
     "url": "https://github.com/cgkineo/adapt-strickle/issues"
-  },
-  "devDependencies": {
-    "karma": "~0.10",
-    "karma-mocha": "*",
-    "karma-expect": "*"
   }
 }

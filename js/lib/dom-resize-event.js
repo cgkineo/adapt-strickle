@@ -1,5 +1,7 @@
 (function() {
 
+  if ($.fn.off.elementResizeOriginalOff) return;
+
   var attachEvent = document.attachEvent;
   var isIE = navigator.userAgent.match(/Trident/);
   var requestFrame = (function(){
@@ -63,7 +65,7 @@
     if (!element.__resizeListeners__.length) {
       if (attachEvent) element.detachEvent('onresize', resizeListener);
       else {
-        element.__resizeTrigger__.contentDocument.defaultView.removeEventListener('resize', resizeListener);
+        if (!element.__resizeTrigger__.contentDocument) element.__resizeTrigger__.contentDocument.defaultView.removeEventListener('resize', resizeListener);
         element.__resizeTrigger__ = !element.removeChild(element.__resizeTrigger__);
       }
     }

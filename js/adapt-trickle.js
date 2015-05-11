@@ -59,9 +59,10 @@ define([
         },
 
         onWrapperResize: function() {
-            if (this._stopListeningToResizeEvent == true) return;
+            if (this._listenToResizeEvent == false) return;
 
             this.resizeBodyToCurrentIndex();
+            this._listenToResizeEvent = true;
         },
 
         onRemove: function(view) {
@@ -71,7 +72,7 @@ define([
 
         model: new Backbone.Model({}),
 
-        _stopListeningToResizeEvent: true,
+        _listenToResizeEvent: false,
         _isPageInitialized: false,
         _isFinished: false,
         _currentStepIndex: 0,
@@ -116,7 +117,7 @@ define([
             this._descendantsParentFirst = Models.getDescendantsFlattened(pageId, true);
             this._currentStepIndex = 0;
             this._isFinished = false;
-            this._stopListeningToResizeEvent = true;
+            this._listenToResizeEvent = false;
 
             this.checkResetChildren();
 
@@ -252,7 +253,7 @@ define([
         resizeBodyToCurrentIndex: function() {
             if (this._isFinished) return this.showElements();
 
-            this._stopListeningToResizeEvent = true;
+            this._listenToResizeEvent = false;
 
             this.showElements();
 
@@ -260,7 +261,6 @@ define([
             var $element = $("." + id);
 
             if ($element.length === 0) {
-                this._stopListeningToResizeEvent = false
                 return;
             }
 
@@ -269,7 +269,6 @@ define([
 
             $('body').css("height", elementBottomOffset + "px");
 
-            this._stopListeningToResizeEvent = false;
         },
 
         showElements: function() {
@@ -311,8 +310,7 @@ define([
                     itemModel.set("_isVisible", false);
                 }
             }
-
-            console.log("Unlocking to:", showToId);
+            
         },
 
         getCurrentStepModel: function() {
@@ -353,7 +351,7 @@ define([
 
                 this._currentStepIndex = i;
 
-                this._stopListeningToResizeEvent = false;
+                this._listenToResizeEvent = true;
                 
                 return true;
             }
@@ -383,6 +381,7 @@ define([
             $("html").addClass("trickle");
             Adapt.trigger("steplocking:waitInitialize");
             this.resizeBodyToCurrentIndex();
+            this._listenToResizeEvent = true;
         },
 
         endTrickle: function() {
@@ -391,6 +390,7 @@ define([
             $("body").css("height", "");
             $("html").removeClass("trickle");
             this.resizeBodyToCurrentIndex();
+            this._listenToResizeEvent = true;
         },
 
         //completion reorder and processing

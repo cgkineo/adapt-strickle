@@ -1,49 +1,51 @@
 /*
-* adapt-trickle
+* adapt-contrib-trickle
 * License - http://github.com/adaptlearning/adapt_framework/LICENSE
 * Maintainers - Oliver Foster <oliver.foster@kineo.com>
 */
 
 define([
-	'coreJS/adapt', 
-	], function(Adapt) {
+    'coreJS/adapt', 
+], function(Adapt) {
 
-	var TrickleTutorPlugin = _.extend({
+    var TrickleTutorPlugin = _.extend({
 
-		_isTrickleWaiting: false,
+        onDataReady: function() {
+            this.setupEventListeners();
+        },
 
-		initialize: function() {
-			this.listenToOnce(Adapt, "app:dataReady", this.onDataReady);
-		},
+        onStepLockingWaitCheck: function(model) {
+            if ( model.get("_type") !== "component" || !model.get("_isQuestionType") || !model.get("_canShowFeedback")) return;
 
-		onDataReady: function() {
-			this.setupEventListeners();
-		},
+            Adapt.trigger("steplocking:wait");
+            this._isTrickleWaiting = true;
+        },
 
-		setupEventListeners: function() {
-			this.listenTo(Adapt, "steplocking:waitCheck", this.onStepLockingWaitCheck);
-			this.listenTo(Adapt, "tutor:open", this.onTutorOpened);
-			this.listenTo(Adapt, "tutor:closed", this.onTutorClosed);
-		},
+        onTutorOpened: function() {
+            if (this._isTrickleWaiting) return;
 
-		onStepLockingWaitCheck: function(model) {
-			if ( model.get("_type") === "component" && model.get("_isQuestionType") &&  model.get("_canShowFeedback")) {
-				Adapt.trigger("steplocking:wait");
-				this._isTrickleWaiting = true;
-			}
-		},
+            Adapt.trigger("steplocking:wait");
+        },
 
-		onTutorOpened: function() {
-			if (!this._isTrickleWaiting) Adapt.trigger("steplocking:wait");
-		},
+        onTutorClosed: function() {
+            Adapt.trigger("steplocking:unwait");
+            this._isTrickleWaiting = false;
+        },
 
-		onTutorClosed: function() {
-			Adapt.trigger("steplocking:unwait");
-			this._isTrickleWaiting = false;
-		}
+        _isTrickleWaiting: false,
 
-	}, Backbone.Events);
+        initialize: function() {
+            this.listenToOnce(Adapt, "app:dataReady", this.onDataReady);
+        },
 
-	TrickleTutorPlugin.initialize();
+        setupEventListeners: function() {
+            this.listenTo(Adapt, "steplocking:waitCheck", this.onStepLockingWaitCheck);
+            this.listenTo(Adapt, "tutor:open", this.onTutorOpened);
+            this.listenTo(Adapt, "tutor:closed", this.onTutorClosed);
+        }
+
+    }, Backbone.Events);
+
+    TrickleTutorPlugin.initialize();
 
 })

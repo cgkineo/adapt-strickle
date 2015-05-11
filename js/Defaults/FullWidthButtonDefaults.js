@@ -1,4 +1,11 @@
+/*
+* adapt-contrib-trickle
+* License - http://github.com/adaptlearning/adapt_framework/LICENSE
+* Maintainers - Oliver Foster <oliver.foster@kineo.com>
+*/
+
 define(function() {
+
 	var FullWidthButtonDefaults = {
 		_button: {
 			_autoHide: true
@@ -7,5 +14,6 @@ define(function() {
 			_isEnabled: true
 		}
 	};
+	
 	return FullWidthButtonDefaults;
 })

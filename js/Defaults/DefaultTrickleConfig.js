@@ -1,24 +1,34 @@
+/*
+* adapt-contrib-trickle
+* License - http://github.com/adaptlearning/adapt_framework/LICENSE
+* Maintainers - Oliver Foster <oliver.foster@kineo.com>
+*/
+
 define(function() {
+
 	var DefaultTrickleConfig = {
 		_isEnabled: false,
 		_duration: 500,
 		_autoScroll: true,
+		_onChildren: false,
 		_button: {
 			_isEnabled: true,
 			_isFullWidth: true,
-			_styleBeforeCompletion: "visible",
+			_styleBeforeCompletion: "hidden",
 			_styleAfterClick: "hidden",
-			_autoHide: false,
+			_autoHide: true,
 			text: "Continue",
+			finalText: "Finish",
 			_component: "trickle-button"
 		},
 		_stepLocking: {
 	        _isEnabled: true, 
 	        _isCompletionRequired: true,
-	        _isLockedOnRevisit: true
+	        _isLockedOnRevisit: false
 	    },
 	    _isInteractionComplete: false,
 	    _scrollTo: "@block +1"
 	};
+
 	return DefaultTrickleConfig;
 })

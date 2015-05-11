@@ -1,10 +1,10 @@
 {
-  "name": "adapt-trickle",
-  "homepage": "https://github.com/cgkineo/adapt-strickle",
+  "name": "adapt-contrib-trickle",
+  "homepage": "https://github.com/adaptlearning/adapt-contrib-trickle",
   "authors": [
     "Oliver Foster <oliver.foster@kineo.com"
   ],
-  "description": "%description",
+  "description": "",
   "main": "/js/adapt-trickle.js",
   "keywords": [
     "adapt-plugin",

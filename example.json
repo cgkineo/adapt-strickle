@@ -1,112 +1,37 @@
-/*
-* adapt-strickle
-* License - http://github.com/adaptlearning/adapt_framework/LICENSE
-* Maintainers - Oliver Foster <oliver.foster@kineo.com>
-*/
 
-// To go in the article.json/block.json file
-//enables trickle on the page
 
-//TRICKLE STYLE BUTTON
-"_strickle": {
-    "_isEnabled":true,
+//TRICKLE STYLE BUTTON ON ALL ARTICLE BLOCKS
+//put in article.json
+"_trickle": {
+    "_isEnabled": true,
+    "_onChildren": true 
+}
+
+
+
+//Manual Configuration Options
+"_trickle": {
+    "_isEnabled": true, //(default=false)
+    "_duration": 500, //(default=500)
+    "_autoScroll": true, //(default=true)
+    "_onChildren": false, //(default=false)
     "_button": {
-        "_isEnabled": true  || true,
-        "_isFullWidth": true  || true,
-        "_styleAfterClick": "hidden|disabled|none" || "hidden",
-        "text": "Continue to next section." || "Continue"
+        "_isEnabled": true, //(default=true)
+        "_styleBeforeCompletion": "hidden|visible", //(default=hidden)
+        "_styleAfterClick": "hidden|disabled|scroll", //(default=hidden)
+        "_isFullWidth": true, //(default=true)
+        "_autoHide": true, //(default=true)
+        "_className": "|trickle-round-arrow", //(default="")
+        "text": "Continue", //(default="Continue")
+        "finalText": "Finish", //(default="Finish")
+        "_component": "trickle-button" //(default="trickle-button")
     },
     "_stepLocking": {
-        "_isEnabled": true || true, 
-        "_requireCompletion": true || true
+        "_isEnabled": true, //(default=true)
+        "_isCompletionRequired": true, //(default=true)
+        "_isLockedOnRevisit": false //(default=false)
     },
-    "_scrollTo": "@block +1" || "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
+    "_scrollTo": "@block +1" //(default="@block +1")
 }
-
-//INLINE BUTTON, USE AS SCROLL TO ON SUBSEQUENT CLICKS (STEP LOCKING AND REQUIRED COMPLETION)
-"_strickle": {
-    "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "inline-jump",
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-//INLINE BUTTON, USE AS SCROLL TO ALWAYS (NOT STEP LOCKED AND NO COMPLETION REQUIRED)
-"_strickle": {
-    "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "jump",
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-//INLINE BUTTON, ALWAYS SCROLL TO ALWAYS (STEP LOCKING, NO COMPLETION REQUIRED)
-"_strickle": {
-    "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "jump-lock",
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-//INLINE BUTTON DISABLED ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
-"_strickle": {
-    "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "inline-disable",
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-//INLINE BUTTON HIDDEN ON CLICK  (STEP LOCKING AND REQUIRED COMPLETION)
-"_strickle": {
-    "_isEnabled":true,
-    "button": "Continue to next section.",
-    "_buttonType": "inline-hide",
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-
-//NO BUTTON  (STEP LOCKING AND REQUIRED COMPLETION)
-"_strickle": {
-    "_isEnabled":true,
-    "_scrollTo": "@block +1",
-    "_duration": 500,
-    "_autoScroll": true,
-    "_isLockedOnRevisit": false
-}
-
-
-//ADDITIONAL MODIFICATIONS
-"_strickle": {
-    "_componentClasses": "class1 class2",
-    "_buttonClasses": "class3 class4"
-}
-
-
-_scrollTo Examples:
-
-"@block +2" > scroll to current block + 1
-"@article +2" > scroll to current article + 2
-".b-25" > scroll to block b-25
-"b-25" > scroll to block b-25
-
-
-
 
 

@@ -1,4 +1,11 @@
+/*
+* adapt-contrib-trickle
+* License - http://github.com/adaptlearning/adapt_framework/LICENSE
+* Maintainers - Oliver Foster <oliver.foster@kineo.com>
+*/
+
 define(function() {
+	
 	function StructureType(id, plural, level) {
 		this._id = id;
 		this._plural = plural;

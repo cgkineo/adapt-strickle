@@ -8,12 +8,68 @@ define([
 	'coreJS/adapt', 
 	'./DataTypes/StructureType', 
 	'./Defaults/DefaultTrickleConfig',
+	'./Utility/Models',
 	'./trickle-tutorPlugin',
 	'./trickle-buttonView',
 	'./lib/dom-resize-event'
-	], function(Adapt, StructureType, DefaultTrickleConfig) {
+	], function(Adapt, StructureType, DefaultTrickleConfig, Models) {
 
 	var Trickle = _.extend({
+
+		onDataReady: function() {
+			this.setupEventListeners();
+		},
+
+		onPagePreRender: function(view) {
+			this.initializePage(view);
+		},
+
+		onArticlePreRender: function(view) {
+			this.checkApplyTrickleToChildren( view.model );
+		},
+
+		onPagePostRender: function(view) {
+			this.resizeBodyToCurrentIndex();
+		},
+
+		onArticleAndBlockPostRender: function(view) {
+			this.setupStep( view.model );
+		},
+
+		onPageReady: function(view) {
+			this.initializeStep();
+			this.resizeBodyToCurrentIndex();
+		},
+
+		onAnyComplete: function(model, value, isPerformingCompletionQueue) {
+			this.queueOrExecuteCompletion(mode, value, performCompletionQueue);
+		},
+
+		onStepUnlockWait: function() {
+			this._waitForUnlockRequestsCount++;
+		},
+
+		onStepUnlockUnwait: function() {
+			this._waitForUnlockRequestsCount--;
+			if (this._waitForUnlockRequestsCount < 0) this._waitForUnlockRequestsCount = 0;
+
+			if (this._isFinished) return;
+
+			var descendant = this.getCurrentStepModel();
+			this.checkStepComplete(descendant);
+		},
+
+		onWrapperResize: function() {
+			if (this._stopListeningToResizeEvent == true) return;
+
+			this.resizeBodyToCurrentIndex();
+		},
+
+		onRemove: function(view) {
+			this.removeTrickle();
+		},
+
+
 
 		model: new Backbone.Model({}),
 
@@ -23,17 +79,13 @@ define([
 			this.listenToOnce(Adapt, "app:dataReady", this.onDataReady);
 		},
 
-		onDataReady: function() {
-			this.setupEventListeners();
-		},
-
 		setupEventListeners: function() {
 			this._onWrapperResize = _.bind(Trickle.onWrapperResize, Trickle);
 			$("#wrapper").on('resize', this._onWrapperResize );
 
 			this.listenTo(Adapt, "remove", this.onRemove);
-			this.listenTo(Adapt, "pageView:preRender", this.onPageInitialize);
-			this.listenTo(Adapt, "pageView:postRender", this.onPageReady);
+			this.listenTo(Adapt, "pageView:preRender", this.onPagePreRender);
+			this.listenTo(Adapt, "pageView:postRender", this.onPagePostRender);
 			this.listenTo(Adapt, "pageView:ready", this.onPageReady);
 
 			this.listenTo(Adapt, "articleView:preRender", this.onArticlePreRender);
@@ -45,15 +97,12 @@ define([
 
 			this.listenTo(Adapt, "trickle:interactionComplete", this.onAnyComplete);
 
-			this.listenTo(Adapt, "steplocking:wait", this.onSteplockingWait);
-			this.listenTo(Adapt, "steplocking:unwait", this.onSteplockingUnwait);
+			this.listenTo(Adapt, "steplocking:wait", this.onStepUnlockWait);
+			this.listenTo(Adapt, "steplocking:unwait", this.onStepUnlockUnwait);
 
 			this.listenTo(Adapt, "trickle:relativeScrollTo", this.relativeScrollTo);
 		},
 
-		onRemove: function(view) {
-			this.removeTrickle();
-		},
 
 		addTrickle: function() {
 			$("html").addClass("trickle");
@@ -68,111 +117,123 @@ define([
 			this.hideElements();
 		},
 
-		onPageInitialize: function(view) {
-			this.initializePage(view);
-		},
-
 		initializePage: function(view) {
 			var pageId = view.model.get("_id");
 
 			var pageConfig = Adapt.course.get("_trickle");
 			if (pageConfig && pageConfig._isEnabled === false) return;
 
-			var descendantsChildrenFirst = this.getDescendantsFlattened(pageId);
-			var descendantsParentFirst = this.getDescendantsFlattened(pageId, true);
+			var descendantsChildrenFirst = Models.getDescendantsFlattened(pageId);
+			var descendantsParentFirst = Models.getDescendantsFlattened(pageId, true);
 
 			this._descendantsChildrenFirst = descendantsChildrenFirst;
 			this._descendantsParentFirst = descendantsParentFirst;
 			this._currentStepIndex = 0;
 			this._isFinished = false;
 			this._stopListeningToResizeEvent = true;
-			
+
 			this.checkResetChildren();
 
-			this.initializeSteplockingWait();
+			this.initializeStepUnlockWait();
 
 		},
 
 		checkResetChildren: function() {
 			var descendantsChildrenFirst = this._descendantsChildrenFirst;
-			for (var i = 0, l = descendantsChildrenFirst.models.length; i < l; i++) {
-				var model = descendantsChildrenFirst.models[i];
-				var trickleConfig = this.getModelTrickleConfig(model);
-				if (!trickleConfig._stepLocking) continue;
+			for (var i = 0, model; model = descendantsChildrenFirst.models[i++];) {
+				this.checkResetModel(model);
+			}
+		},
 
-				if (!trickleConfig._stepLocking._isEnabled) continue;
+		checkResetModel: function(model) {
+			var trickleConfig = this.getModelTrickleConfig(model);
+			if (!trickleConfig._stepLocking) return;
 
-				if (!trickleConfig._isInteractionComplete) {
-					
-					trickleConfig._isLocking = true;
+			if (!trickleConfig._stepLocking._isEnabled) return;
 
-				} else if (trickleConfig._stepLocking._isLockedOnRevisit && !trickleConfig._stepLocking._isCompletionRequired) {
+			if (trickleConfig._onChildren) return;
 
-					trickleConfig._isInteractionComplete = false;
-					trickleConfig._isLocking = true;
-					model.set("_isInteractionComplete", false);
+			if (!trickleConfig._isInteractionComplete) {
+				
+				trickleConfig._isLocking = true;
 
-				} else if ( trickleConfig._stepLocking._isCompletionRequired && !model.get("_isInteractionComplete") ) {
-					
-					trickleConfig._isInteractionComplete = false;
-					trickleConfig._isLocking = true;
-					model.set("_isInteractionComplete", false);
+			} else if (trickleConfig._stepLocking._isLockedOnRevisit && !trickleConfig._stepLocking._isCompletionRequired) {
 
-				} else if ( trickleConfig._stepLocking._isLockedOnRevisit && trickleConfig._stepLocking._isCompletionRequired && model.get("_isInteractionComplete") ) {
-					
-					trickleConfig._isInteractionComplete = true;
-					trickleConfig._isLocking = true;
+				trickleConfig._isInteractionComplete = false;
+				trickleConfig._isLocking = true;
+				model.set("_isInteractionComplete", false);
 
-				}
+			} else if ( trickleConfig._stepLocking._isCompletionRequired && !model.get("_isInteractionComplete") ) {
+				
+				trickleConfig._isInteractionComplete = false;
+				trickleConfig._isLocking = true;
+				model.set("_isInteractionComplete", false);
+
+			} else if ( trickleConfig._stepLocking._isLockedOnRevisit && trickleConfig._stepLocking._isCompletionRequired && model.get("_isInteractionComplete") ) {
+				
+				trickleConfig._isInteractionComplete = true;
+				trickleConfig._isLocking = true;
 
 			}
 		},
 
-		onArticlePreRender: function(view) {
-			var model = view.model;
-			//ignore _isTrickleInteractiveComponents
-			if (model.get("_isTrickleInteractiveComponent")) return;
-
-			this.checkApplyTrickleToChildren(model);
-
-		},
-
 		checkApplyTrickleToChildren: function(model) {
-			var trickleConfig = this.getModelTrickleConfig(model);
-			if (!trickleConfig) return;
+			if (model.get("_type") === "article") {
+				var trickleConfig = this.getModelTrickleConfig(model);
+				if (!trickleConfig) return;
 
-			if (!trickleConfig._onChildren) return;
+				if (!trickleConfig._onChildren) return;
 
-			this.applyTrickleToChildren(model, trickleConfig);
+				this.applyTrickleToChildren(model, trickleConfig);
+			}
 		},
 
 		applyTrickleToChildren: function(model, trickleConfig) {
 			var children = model.getChildren();
 			for (var i = 0, l = children.models.length; i < l; i++) {
-				var child = children.models[i];
-				var childTrickleConfig = this.getModelTrickleConfig(child);
-				if (childTrickleConfig) {
-					child.set("_trickle", $.extend(true, 
-						{}, 
-						trickleConfig, 
-						childTrickleConfig, 
-						{ 
-							_id: child.get("_id"),
-							_onChildren: false,
-							_isEnabled: trickleConfig._isEnabled
-						}
-					));
-				} else {
-					child.set("_trickle", $.extend(true, 
-						{}, 
-						trickleConfig, 
-						{ 
-							_id: child.get("_id"),
-							_onChildren: false 
-						}
-					));
-				}           
 
+				var child = children.models[i];
+				var childTrickleConfig = child.get("_trickle");
+				var textOverlay;
+
+				if (i == l - 1) {
+					if (trickleConfig._button.finalText) {
+						var previousText = $.extend(true, 
+							{}, 
+							trickleConfig, 
+							childTrickleConfig
+						)._button.text;
+
+						textOverlay = {
+							_button: {
+								text: trickleConfig._button.finalText,
+								previousText: previousText
+							}
+						};
+					}
+				} else {
+					if (childTrickleConfig && childTrickleConfig._button.previousText) {
+						textOverlay = {
+							_button: {
+								text: childTrickleConfig._button.previousText,
+								previousText: null
+							}
+						};
+					}
+				}
+
+				child.set("_trickle", $.extend(true, 
+					{}, 
+					trickleConfig, 
+					childTrickleConfig, 
+					{ 
+						_id: child.get("_id"),
+						_onChildren: false,
+						_isEnabled: trickleConfig._isEnabled
+					},
+					textOverlay
+				));
+				
 			}
 		},
 
@@ -211,24 +272,15 @@ define([
 			return model.get("_trickle");
 		},
 
-		onPageReady: function(view) {
-			this.initializeStep();
-		},
-
 		initializeStep: function() {
-			if (this.isFinished()) return;
-			this.initializeSteplockingWait();
+			if (this._isFinished) return;
+			this.initializeStepUnlockWait();
 
 			if (this.setupStepLock()) {
 				this.addTrickle();
 			} else {
 				this.removeTrickle();
 			}
-		},
-
-		isFinished: function() {
-			var isFinished = this._isFinished;
-			return isFinished;
 		},
 
 		setupStepLock: function() {
@@ -242,9 +294,7 @@ define([
 				this._currentStepIndex = i;
 
 				this._stopListeningToResizeEvent = false;
-
-				this.resizeBodyToCurrentIndex();
-
+				
 				return true;
 			}
 
@@ -295,6 +345,8 @@ define([
 		},
 
 		resizeBodyToCurrentIndex: function() {
+			if (this._isFinished) return;
+
 			this._stopListeningToResizeEvent = true;
 
 			this.hideElements();
@@ -317,7 +369,7 @@ define([
 		},
 
 		getCurrentStepModel: function() {
-			if (this.isFinished()) return;
+			if (this._isFinished) return;
 
 			return this._descendantsChildrenFirst.models[this._currentStepIndex];
 		},
@@ -326,88 +378,74 @@ define([
 			if (this._descendantsParentFirst === undefined) return;
 
 			var model = this.getCurrentStepModel();
-			var descendantsParentFirstJSON = this._descendantsParentFirst.toJSON();
+			var ancestors = this._descendantsParentFirst.models;
+			var ancestorIds = _.pluck(this._descendantsParentFirst.toJSON(), "_id");
 
-			var id;
+			var showToId;
 			if (model !== undefined) {
-				id = model.get("_id");
+				showToId = model.get("_id");
+
+				var modelStructureType = StructureType.fromString(model.get("_type"));
+				var isLastType = (modelStructureType._level === StructureType.levels);
+
+				if (!isLastType) {
+					var currentAncestorIndex = _.indexOf(ancestorIds, showToId);
+					var ancestorChildComponents = ancestors[currentAncestorIndex].findDescendants("components");
+
+					showToId = ancestorChildComponents.models[ancestorChildComponents.models.length-1].get("_id");
+				}
+
 			} else {
-				id = descendantsParentFirstJSON[descendantsParentFirstJSON.length -1]._id;
+				showToId = ancestors[ancestors.length -1].get("_id");
 			}
 			
-			var pageDescendantIds = _.pluck(descendantsParentFirstJSON, "_id");
-			var currentStepParentFirstIndex = _.indexOf(pageDescendantIds, id);
-
-			var jquerySelector;
-			var elementIdsAfterCurrent = [];
-			for (var i = currentStepParentFirstIndex + 1, l = pageDescendantIds.length; i < l; i++) {
-				elementIdsAfterCurrent.push(pageDescendantIds[i]);
-			}
 			
+			var showToIndex = _.indexOf(ancestorIds, showToId);
 
-			var elementIdsBeforeCurrent = [];
-			for (var i = 0, l = currentStepParentFirstIndex+1; i < l; i++) {
-				elementIdsBeforeCurrent.push(pageDescendantIds[i]);
+			for (var i = 0, l = ancestors.length; i < l; i++) {
+				var itemModel = ancestors[i];
+				if (i <= showToIndex) {
+					itemModel.set("_isVisible", true);
+				} else {
+					itemModel.set("_isVisible", false);
+				}
 			}
 
-			elementIdsAfterCurrent = _.difference(elementIdsAfterCurrent, elementIdsBeforeCurrent);
-
-			for (var i = 0, l = elementIdsAfterCurrent.length; i < l; i++) {
-				var itemModel = Adapt.findById(elementIdsAfterCurrent[i]);
-				itemModel.set("_isVisible", false);
-				itemModel.setOnChildren({_isVisible: false});
-			}
-
-			for (var i = 0, l = elementIdsBeforeCurrent.length; i < l; i++) {
-				var itemModel = Adapt.findById(elementIdsBeforeCurrent[i]);
-				itemModel.set("_isVisible", true);
-				itemModel.setOnChildren({_isVisible: true});
-			}
-
-			console.log('before',elementIdsBeforeCurrent);
-			console.log('after',elementIdsAfterCurrent);
-
-			console.log("Unlocking to:", id);
+			console.log("Unlocking to:", showToId);
 		},
 
-		onArticleAndBlockPostRender: function(view) {
-			//if (this.isFinished()) return;
 
-			var model = view.model;
+		setupStep: function(model) {
 			//ignore _isTrickleInteractiveComponents
 			if (model.get("_isTrickleInteractiveComponent")) return;
 
-			this.setupStep(model);
-		},
-
-		setupStep: function(model) {
 			var trickleConfig = this.getModelTrickleConfig(model)
 			if (!trickleConfig) return;
 
 			if (trickleConfig._onChildren) return;
 
-			this.checkResetChild(model);
+			this.setModelIsStepLockingState(model);
 
 			Adapt.trigger("trickle:interactionInitialize", model);
 		},
 
-		checkResetChild: function(model) {
+		setModelIsStepLockingState: function(model) {
 			var trickleConfig = this.getModelTrickleConfig(model)
 			var isStepLocking = this.isModelStepLocking(model);
 			if (trickleConfig === undefined) return;
 			if (trickleConfig._stepLocking === undefined) return;
 			trickleConfig._isStepLocking = isStepLocking;
-			/*if (trickleConfig._stepLocking._isLockedOnRevisit) {
-				trickleConfig._isInteractionComplete = !isStepLocking;
-			}*/
 		},
+
+		
+		
 
 		//completion reorder and processing
 		_completionQueue: [],
-		onAnyComplete: function(model, value, performingCompletionQueue) {
+		queueOrExecuteCompletion: function(model, value, isPerformCompletionQueue) {
 			if (value === false) return;    
 
-			if (performingCompletionQueue !== true) {
+			if (isPerformCompletionQueue !== true) {
 				//article, block and component completion trigger in a,b,c order need in c,b,a order
 				//otherwise block completion events will occur before component completion events
 				var modelStructureType = StructureType.fromString(model.get("_type"));
@@ -437,7 +475,7 @@ define([
 		},
 
 		checkStepComplete: function(model) {
-			if (this.isFinished()) return;
+			if (this._isFinished) return;
 
 			var currentModel = this.getCurrentStepModel();
 			//check if the step is complete only if the model matches the current trickle item, or the completion came from a trickle interactive component
@@ -456,7 +494,7 @@ define([
 			trickleConfig._isInteractionComplete = true;
 			
 			//if plugins need to present before the interaction then break
-			if (this.isSteplockingWaiting()) return;
+			if (this.isStepUnlockWaiting()) return;
 			
 			//if completion is required and item is not yet complete then break
 			if (trickleConfig._stepLocking._isCompletionRequired &&!model.get("_isInteractionComplete")) return;
@@ -464,7 +502,7 @@ define([
 			Adapt.trigger("trickle:interactionRequired", model);
 			
 			//if plugins need to present before the next step occurs then break
-			if (this.isSteplockingWaiting()) return;
+			if (this.isStepUnlockWaiting()) return;
 
 			this.stepComplete(model);
 		},
@@ -485,141 +523,16 @@ define([
 			this.relativeScrollTo( model, scrollTo );
 		},
 
-		onWrapperResize: function() {
-			if (this._stopListeningToResizeEvent == true) return;
-			if (this.isFinished()) return;
-
-			this.resizeBodyToCurrentIndex();
-		},
-
 
 		//steplocking wait interface
-		initializeSteplockingWait: function() {
-			this._waitForPluginsCount = 0;
+		initializeStepUnlockWait: function() {
+			this._waitForUnlockRequestsCount = 0;
 		},
 
-		onSteplockingWait: function() {
-			this._waitForPluginsCount++;
+		isStepUnlockWaiting: function() {
+			return this._waitForUnlockRequestsCount > 0;
 		},
 
-		onSteplockingUnwait: function() {
-			this._waitForPluginsCount--;
-			if (this._waitForPluginsCount < 0) this._waitForPluginsCount = 0;
-
-			if (this.isFinished()) return;
-
-			var descendant = this.getCurrentStepModel();
-			this.checkStepComplete(descendant);
-		},
-
-		isSteplockingWaiting: function() {
-			return this._waitForPluginsCount > 0;
-		},
-
-
-		//utility functions
-		getDescendantsFlattened: function(id, parentFirst) {
-			var model = Adapt.findById(id);
-			if (model === undefined) return undefined;
-
-			var descendants = [];
-
-			var modelStructureType = StructureType.fromString(model.get("_type"));
-			var isLastType = (modelStructureType._level === StructureType.levels);
-
-			if (isLastType) {
-
-				descendants.push(model);
-
-			} else {
-
-				var children = model.getChildren();
-
-				for (var i = 0, l = children.models.length; i < l; i++) {
-
-					var child = children.models[i];
-
-					var modelStructureType = StructureType.fromString(child.get("_type"));
-					var isLastType = (modelStructureType._level === StructureType.levels);
-
-					if (isLastType) {
-
-						descendants.push(child);
-
-					} else {
-
-						var subDescendants = this.getDescendantsFlattened(child.get("_id"), parentFirst);
-						if (parentFirst == true) descendants.push(child);
-						descendants = descendants.concat(subDescendants.models);
-						if (parentFirst != true) descendants.push(child);
-
-					}
-
-				}
-			}
-
-			return new Backbone.Collection(descendants);
-		},
-
-		findRelative: function(model, relativeString) {
-			//return a model relative to the specified one
-
-			function parseRelative(relativeString) {
-				var type = relativeString.substr(0, _.indexOf(relativeString, " "));
-				var offset = parseInt(relativeString.substr(type.length));
-				type = type.substr(1);
-
-				/*RETURN THE TYPE AND OFFSET OF THE SCROLLTO
-				* "@component +1"  : 
-				* {
-				*       type: "component",
-				*       offset: 1
-				* }
-				*/
-				return { 
-					type: type,
-					offset: offset
-				};
-			}
-
-			function getTypeOffset(model) {
-				var modelType = StructureType.fromString(model.get("_type"));
-
-				//CREATE HASH FOR MODEL OFFSET IN PARENTS ACCORDING TO MODEL TYPE
-				var offsetCount = {};
-				for (var i = modelType._level - 1, l = 0; i > l; i--) {
-					offsetCount[StructureType.fromInt(i)._id] = -1;
-				}
-
-				return offsetCount;
-			}
-
-			var fromIndex = this.getModelPageIndex(model);
-
-			var typeOffset = getTypeOffset(model);
-			var relativeInstructions = parseRelative(relativeString);
-
-			var descendantsJSON = this._descendantsChildrenFirst.toJSON();
-			for (var i = fromIndex +1, l = descendantsJSON.length; i < l; i++) {
-				var item = descendantsJSON[i];
-
-				if (!typeOffset[item._type]) typeOffset[item._type] = 0;
-
-				typeOffset[item._type]++;
-
-				if (typeOffset[relativeInstructions.type] >= relativeInstructions.offset) {
-					if (!$("."+item._id).is(":visible")) {
-						//IGNORE VISIBLY HIDDEN ELEMENTS
-						relativeInstructions.offset++;
-						continue;
-					}
-
-					return Adapt.findById(item._id);
-				}
-			}
-
-			return undefined;
-		},
 
 		relativeScrollTo: function(model, scrollTo) {
 			if (scrollTo === undefined) scrollTo = "@block +1";
@@ -628,7 +541,7 @@ define([
 			switch (scrollTo.substr(0,1)) {
 			case "@":
 				//NAVIGATE BY RELATIVE TYPE
-				var relativeModel = this.findRelative(model, scrollTo);
+				var relativeModel = Models.findRelative(model, scrollTo);
 				scrollToId = relativeModel.get("_id");
 
 				break;

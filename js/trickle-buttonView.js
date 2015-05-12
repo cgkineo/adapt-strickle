@@ -24,9 +24,13 @@ define([
             this.showButton(parentModel); 
         },
 
-        onInview: function(event, isInview) {
+        onInview: function(event, measurements) {
             //show or hide the button when button is inview/outview
-            this.checkAutoHide(isInview);
+            var onscreen = measurements.onscreen;
+            if (measurements.bottom > -(this.$(".component-inner").outerHeight()*1.5))
+                onscreen = true;
+
+            this.checkAutoHide(onscreen);
         },
 
         onClick: function() {
@@ -44,7 +48,7 @@ define([
 
         events: {
             "click .trickle-button-inner > *": "onClick",
-            "inview": "onInview"
+            "onscreen": "onInview"
         },
 
         _isTrickleWaiting: false,

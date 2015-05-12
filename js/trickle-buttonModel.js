@@ -39,6 +39,7 @@ define([
                 _parentComponent: parentModel.get("_component"),
                 _trickle: trickleConfig,
                 _isVisible: true,
+                _isHidden: false,
                 _isAvailable: true,
                 _isEnabled: true,
                 _isLocking: trickleConfig._isLocking,

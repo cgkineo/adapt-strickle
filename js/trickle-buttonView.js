@@ -57,6 +57,9 @@ define([
 
             this.model.set("_isEnabled", _isEnabled);
             this.model.set("_isVisible", _isVisible);
+            this.model.set("_isHidden", !_isVisible);
+
+            this.checkAutoHide(false, false);
         },
 
         addCustomClasses: function() {
@@ -180,14 +183,31 @@ define([
             this.toggleLock(true);
         },
 
-        checkAutoHide: function(bool) {
+        checkAutoHide: function(bool, animate) {
             var trickleConfig = this.model.get("_trickle");
             if (!trickleConfig._button._autoHide) return;
 
             if (!this.isOnCompleteVisible()) return;
 
             this.model.set("_isVisible", true);
-            this.$('.component-inner').css("visibility", bool ? "visible" : "hidden");
+
+            if (this.model.get("_isHidden") == bool) return;
+
+            this.model.set("_isHidden", bool);
+
+            if (animate === false) {
+                if (!bool) this.$('.component-inner').css("visibility", "hidden");
+                else if (bool) this.$('.component-inner').css("visibility", "visible");
+            } else {
+                if (bool) this.$('.component-inner').css("visibility", "visible");
+                this.$('.component-inner').velocity({opacity: bool ? 1 : 0 }, {
+                    duration: 250,
+                    complete: _.bind(function() {
+                        if (!bool) this.$('.component-inner').css("visibility", "hidden");
+                    }, this)
+                })
+            }
+            
         },
 
         isOnCompleteVisible: function() {

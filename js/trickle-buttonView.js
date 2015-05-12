@@ -15,16 +15,11 @@ define([
             this.setDisabledState(!value);
         },
 
-        onVisibilityChange: function(model, value) {
-            //apply/remove the lock when button visible/hidden
-            this.checkApplyLock(value);
-        },
-
         onInteractionRequired: function(parentModel) {
             this.showButton(parentModel); 
         },
 
-        onInview: function(event, measurements) {
+        onOnScreen: function(event, measurements) {
             //show or hide the button when button is inview/outview
             var onscreen = measurements.onscreen;
             if (measurements.bottom > -(this.$(".component-inner").outerHeight()*1.5))
@@ -48,7 +43,7 @@ define([
 
         events: {
             "click .trickle-button-inner > *": "onClick",
-            "onscreen": "onInview"
+            "onscreen": "onOnScreen"
         },
 
         _isTrickleWaiting: false,
@@ -78,6 +73,11 @@ define([
 
                 var isEnabledAfterCompletion = (trickleConfig._button._styleAfterClick == "scroll");
                 _isEnabled = isEnabledAfterCompletion && this.model.get("_isInteractionComplete");
+
+            } else if (trickleConfig._stepLocking._isEnabled) {
+
+                var isDisabledAfterCompletion = (trickleConfig._button._styleAfterClick == "disabled");
+                _isEnabled = !(isDisabledAfterCompletion && this.model.get("_isInteractionComplete"));
 
             }
             return _isEnabled;
@@ -118,14 +118,6 @@ define([
             this.listenTo(this.model, "change:_isEnabled", this.onEnabledChange);
             this.listenTo(this.model, "change:_isVisible", this.onVisibilityChange);
             this.listenToOnce(Adapt, "remove", this.onRemove);
-        },
-
-        checkApplyLock: function(bool) {
-            //if not complete, is enabled and is visible then set lock according to inview
-            if (this.model.get("_isComplete")) return;
-            if (!this.model.get("_isEnabled") || !this.model.get("_isVisible")) return;
-
-            this.toggleLock(bool);
         },
 
         toggleLock: function(bool) {
@@ -194,6 +186,7 @@ define([
 
             if (!this.isOnCompleteVisible()) return;
 
+            this.model.set("_isVisible", true);
             this.$('.component-inner').css("visibility", bool ? "visible" : "hidden");
         },
 

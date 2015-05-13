@@ -7,7 +7,7 @@
 define(function() {
 
 	var DefaultTrickleConfig = {
-		_isEnabled: false,
+		_isEnabled: true,
 		_duration: 500,
 		_autoScroll: true,
 		_onChildren: false,

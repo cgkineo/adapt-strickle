@@ -11,7 +11,7 @@
 
 //Manual Configuration Options
 "_trickle": {
-    "_isEnabled": true, //(default=false)
+    "_isEnabled": true, //(default=true)
     "_duration": 500, //(default=500)
     "_autoScroll": true, //(default=true)
     "_onChildren": false, //(default=false)

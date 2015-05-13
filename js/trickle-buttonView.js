@@ -17,6 +17,10 @@ define([
             this.setDisabledState(!value);
         },
 
+        onSteplockingCheckWait: function(parentModel) {
+            this.checkCurrentInteraction(parentModel);
+        },
+
         onInteractionRequired: function(parentModel) {
             this.showButton(parentModel); 
         },
@@ -122,7 +126,7 @@ define([
 
         setupEventListeners: function() {
             this.listenTo(Adapt, "trickle:interactionRequired", this.onInteractionRequired);
-            this.listenTo(Adapt, "steplocking:waitCheck", this.onInteractionRequired);
+            this.listenTo(Adapt, "steplocking:waitCheck", this.onSteplockingCheckWait);
             this.listenTo(this.model, "change:_isEnabled", this.onEnabledChange);
             this.listenTo(this.model, "change:_isVisible", this.onVisibilityChange);
             this.listenToOnce(Adapt, "remove", this.onRemove);
@@ -169,6 +173,15 @@ define([
             this._isTrickleWaiting = false;
         },
 
+        checkCurrentInteraction: function(parentModel) {
+            if (parentModel.get("_id") != this.model.get("_parentId")) return;
+            if (this.model.get("_isComplete")) return;
+
+            var trickleConfig = this.model.get("_trickle");
+
+            this.model.set("_isEnabled", true);
+        },
+
         showButton: function(parentModel) {
             //check if the interaction required event is intended for this button
             if (parentModel.get("_id") != this.model.get("_parentId")) return;
@@ -186,6 +199,8 @@ define([
             this.model.set("_isEnabled", true);
 
             this.toggleLock(true);
+
+            this.checkAutoHide(true, true);
         },
 
         checkAutoHide: function(bool, animate) {

@@ -18,7 +18,6 @@ define(function() {
 			_styleAfterClick: "hidden",
 			_autoHide: true,
 			text: "Continue",
-			finalText: "Finish",
 			_component: "trickle-button"
 		},
 		_stepLocking: {

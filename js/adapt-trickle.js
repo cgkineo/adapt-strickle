@@ -19,7 +19,7 @@ define([
 
         onDataReady: function() {
             var trickleConfig = Adapt.config.get("_trickle");
-            if (trickleConfig._completionAttribute) completionAttribute = trickleConfig._completionAttribute;
+            if (trickleConfig && trickleConfig._completionAttribute) completionAttribute = trickleConfig._completionAttribute;
 
             this.setupEventListeners();
         },

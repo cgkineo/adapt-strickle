@@ -10,9 +10,14 @@ define([
     './trickle-buttonModel'
 ], function(Adapt, TrickleButtonView, TrickleButtonModel) {
 
+    var completionAttribute = "_isInteractionComplete";
+
     var TrickleButtonPlugin = {
         
         onInteractionInitialize: function(model) {
+            var trickleConfig = Adapt.config.get("_trickle");
+            if (trickleConfig._completionAttribute) completionAttribute = trickleConfig._completionAttribute;
+
             TrickleButtonPlugin.createButton(model);
         },
 
@@ -32,7 +37,7 @@ define([
             case "disabled": case "scroll":
                 return true;
             case "hidden":
-                return !model.get("_isInteractionComplete");
+                return !model.get(completionAttribute);
             }
 
             return true;

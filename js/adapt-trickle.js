@@ -13,9 +13,14 @@ define([
     './lib/dom-resize-event'
 ], function(Adapt, DefaultTrickleConfig, Models) {
 
+    var completionAttribute = "_isInteractionComplete";
+
     var Trickle = _.extend({
 
         onDataReady: function() {
+            var trickleConfig = Adapt.config.get("_trickle");
+            if (trickleConfig._completionAttribute) completionAttribute = trickleConfig._completionAttribute;
+
             this.setupEventListeners();
         },
 
@@ -38,6 +43,7 @@ define([
         onPageReady: function(view) {
             this.initializeStep();
             this.resizeBodyToCurrentIndex();
+            this._listenToResizeEvent = true;
         },
 
         onAnyComplete: function(model, value, isPerformingCompletionQueue) {
@@ -59,7 +65,9 @@ define([
         },
 
         onWrapperResize: function() {
-            if (this._listenToResizeEvent == false) return;
+            if (!this._listenToResizeEvent) {
+                return;
+            }
 
             this.resizeBodyToCurrentIndex();
             this._listenToResizeEvent = true;
@@ -78,6 +86,7 @@ define([
         _currentStepIndex: 0,
         _descendantsChildrenFirst: null,
         _descendantsParentFirst: null,
+        _pageView: null,
 
         initialize: function() {
             this.listenToOnce(Adapt, "app:dataReady", this.onDataReady);
@@ -95,9 +104,9 @@ define([
             this.listenTo(Adapt, "articleView:preRender", this.onArticlePreRender);
             this.listenTo(Adapt, "blockView:postRender articleView:postRender", this.onArticleAndBlockPostRender);
 
-            this.listenTo(Adapt.articles, "change:_isInteractionComplete", this.onAnyComplete);
-            this.listenTo(Adapt.blocks, "change:_isInteractionComplete", this.onAnyComplete);
-            this.listenTo(Adapt.components, "change:_isInteractionComplete", this.onAnyComplete);           
+            this.listenTo(Adapt.articles, "change:"+completionAttribute, this.onAnyComplete);
+            this.listenTo(Adapt.blocks, "change:"+completionAttribute, this.onAnyComplete);
+            this.listenTo(Adapt.components, "change:"+completionAttribute, this.onAnyComplete);           
 
             this.listenTo(Adapt, "trickle:interactionComplete", this.onAnyComplete);
 
@@ -118,6 +127,7 @@ define([
             this._currentStepIndex = 0;
             this._isFinished = false;
             this._listenToResizeEvent = false;
+            this._pageView = view;
 
             this.checkResetChildren();
 
@@ -149,15 +159,15 @@ define([
 
                 trickleConfig._isInteractionComplete = false;
                 trickleConfig._isLocking = true;
-                model.set("_isInteractionComplete", false);
+                model.set(completionAttribute, false);
 
-            } else if ( trickleConfig._stepLocking._isCompletionRequired && !model.get("_isInteractionComplete") ) {
+            } else if ( trickleConfig._stepLocking._isCompletionRequired && !model.get(completionAttribute) ) {
                 
                 trickleConfig._isInteractionComplete = false;
                 trickleConfig._isLocking = true;
-                model.set("_isInteractionComplete", false);
+                model.set(completionAttribute, false);
 
-            } else if ( trickleConfig._stepLocking._isLockedOnRevisit && trickleConfig._stepLocking._isCompletionRequired && model.get("_isInteractionComplete") ) {
+            } else if ( trickleConfig._stepLocking._isLockedOnRevisit && trickleConfig._stepLocking._isCompletionRequired && model.get(completionAttribute) ) {
                 
                 trickleConfig._isInteractionComplete = true;
                 trickleConfig._isLocking = true;
@@ -233,6 +243,18 @@ define([
 
                 var isLastItem = (i == l - 1);
 
+                var isEnabled = true;
+                if (childTrickleConfig) {
+                    if (childTrickleConfig._isEnabled === false) {
+                        isEnabled = false;
+                    }
+                }
+                if (parentTrickleConfig) {
+                    if (parentTrickleConfig._isEnabled === false) {
+                        isEnabled = false;
+                    }
+                }
+
                 child.set("_trickle", $.extend(true, 
                     {}, 
                     parentTrickleConfig, 
@@ -240,7 +262,7 @@ define([
                     { 
                         _id: child.get("_id"),
                         _onChildren: false,
-                        _isEnabled: parentTrickleConfig._isEnabled,
+                        _isEnabled: isEnabled,
                         _isLastItem: isLastItem
                     }
                 ));
@@ -265,10 +287,9 @@ define([
             }
 
             var elementOffset = $element.offset();
-            var elementBottomOffset = elementOffset.top + $element.height();
+            var elementBottomOffset = elementOffset.top + $element.outerHeight();
 
             $('body').css("height", elementBottomOffset + "px");
-
         },
 
         showElements: function() {
@@ -322,6 +343,7 @@ define([
         setupStep: function(model) {
             var trickleConfig = this.getModelTrickleConfig(model)
             if (!trickleConfig) return;
+            if (!trickleConfig._isEnabled) return;
             if (trickleConfig._onChildren) return;
 
             var isStepLocking = this.isModelStepLocking(model);
@@ -351,8 +373,6 @@ define([
 
                 this._currentStepIndex = i;
 
-                this._listenToResizeEvent = true;
-                
                 return true;
             }
 
@@ -371,7 +391,7 @@ define([
             if (trickleConfig._isLocking) return true;
             if (trickleConfig._isInteractionComplete) return false;
 
-            var isComplete = model.get("_isInteractionComplete");
+            var isComplete = model.get(completionAttribute);
             if (isComplete !== undefined) return !isComplete;
 
             return true;
@@ -389,6 +409,7 @@ define([
             this._isFinished = true;
             $("body").css("height", "");
             $("html").removeClass("trickle");
+            this._pageView = null;
             this.resizeBodyToCurrentIndex();
             this._listenToResizeEvent = true;
         },
@@ -453,7 +474,7 @@ define([
             if (this.isStepUnlockWaiting()) return;
             
             //if completion is required and item is not yet complete then break
-            if (trickleConfig._stepLocking._isCompletionRequired && !model.get("_isInteractionComplete")) return;
+            if (trickleConfig._stepLocking._isCompletionRequired && !model.get(completionAttribute)) return;
 
             Adapt.trigger("trickle:interactionRequired", model);
             

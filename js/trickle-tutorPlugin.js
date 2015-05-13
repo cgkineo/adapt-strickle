@@ -17,17 +17,20 @@ define([
         onStepLockingWaitCheck: function(model) {
             if ( model.get("_type") !== "component" || !model.get("_isQuestionType") || !model.get("_canShowFeedback")) return;
 
+            if (this._isTrickleWaiting) return;
             Adapt.trigger("steplocking:wait");
             this._isTrickleWaiting = true;
         },
 
         onTutorOpened: function() {
             if (this._isTrickleWaiting) return;
-
             Adapt.trigger("steplocking:wait");
         },
 
         onTutorClosed: function() {
+
+            if (!this._isTrickleWaiting) return;
+
             Adapt.trigger("steplocking:unwait");
             this._isTrickleWaiting = false;
         },

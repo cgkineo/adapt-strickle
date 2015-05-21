@@ -382,7 +382,7 @@ define([
 				}
 				
 				this.initializeStep();
-				Adapt.trigger('device:resize');
+				$(window).resize();
 				if (!descendantStrickleConfig._buttonView) {
 					this.scrollTo();
 				}
